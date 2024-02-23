@@ -1,0 +1,73 @@
+name: FazyRV Formal Checks
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  cov_insn:
+    name: Cover insn checks
+    runs-on: prunner
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: OSS CAD Suite
+      uses: YosysHQ/setup-oss-cad-suite@v2
+
+    - name: cov.8
+      run: make fv.rvformal.cov.insn.8
+
+    - name: cov.4
+      run: make fv.rvformal.cov.insn.4
+
+  cov_reg:
+    name: Cover reg checks
+    runs-on: prunner
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: OSS CAD Suite
+      uses: YosysHQ/setup-oss-cad-suite@v2
+
+    - name: cov.8
+      run: make fv.rvformal.cov.reg.8
+
+    - name: cov.4
+      run: make fv.rvformal.cov.reg.4
+
+  bmc_insn:
+    name: BMC insn checks
+    runs-on: prunner
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: OSS CAD Suite
+      uses: YosysHQ/setup-oss-cad-suite@v2
+
+    - name: bmc.8
+      run: make fv.rvformal.bmc.insn.8
+
+    - name: bmc.4
+      run: make fv.rvformal.bmc.insn.4
+
+  bmc_reg:
+    name: BMC reg checks
+    runs-on: prunner
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: OSS CAD Suite
+      uses: YosysHQ/setup-oss-cad-suite@v2
+
+    - name: bmc.8
+      run: make fv.rvformal.bmc.reg.8
+
+    - name: bmc.4
+      run: make fv.rvformal.bmc.reg.4
+

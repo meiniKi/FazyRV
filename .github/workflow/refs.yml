@@ -1,0 +1,44 @@
+name: Formal Workflow
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  reg_ice40:
+    name: iCE40 Reference Implementation
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: OSS CAD Suite
+      uses: YosysHQ/setup-oss-cad-suite@v2
+
+    - name: run flow
+      run: make report.soc.all TARGET_ARCH=ice40
+
+  reg_ecp5:
+    name: ECP5 Reference Implementation
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: OSS CAD Suite
+      uses: YosysHQ/setup-oss-cad-suite@v2
+
+    - name: run flow
+      run: make report.soc.all TARGET_ARCH=ecp5 
+
+  reg_gowin:
+    name: ECP5 Reference Implementation
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: OSS CAD Suite
+      uses: YosysHQ/setup-oss-cad-suite@v2
+
+    - name: run flow
+      run: make report.soc.all TARGET_ARCH=gowin
