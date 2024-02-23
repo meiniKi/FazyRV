@@ -1,0 +1,22 @@
+
+[options]
+mode bmc
+depth 40
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal fazyrv_hadd.v
+read -formal fazyrv_fadd.v
+read -formal fazyrv_cmp.v
+read -formal fazyrv_alu.sv
+read -sv -formal fazyrv_alu_fv.sv
+prep -top fazyrv_alu_fv
+
+[files]
+../../rtl/fazyrv_hadd.v
+../../rtl/fazyrv_fadd.v
+../../rtl/fazyrv_cmp.v
+../../rtl/fazyrv_alu.sv
+fazyrv_alu_fv.sv

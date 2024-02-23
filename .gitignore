@@ -1,0 +1,6 @@
+.venv
+work
+build
+__pycache__/
+*.vcd
+fusesoc.conf

@@ -1,0 +1,6 @@
+[submodule "riscv-formal"]
+	path = riscv-formal
+	url = https://github.com/YosysHQ/riscv-formal.git
+[submodule "embench-iot"]
+	path = embench-iot
+	url = git@github.com:embench/embench-iot.git

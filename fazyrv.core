@@ -1,0 +1,100 @@
+CAPI=2:
+name: ::fazyrv:0.1.0
+description: FazyRV Core
+
+filesets:
+  core:
+    files:
+      - rtl/fazyrv_hadd.v:
+          file_type: verilogSource
+      - rtl/fazyrv_fadd.v:
+          file_type: verilogSource
+      - rtl/fazyrv_cmp.v:
+          file_type: verilogSource
+      - rtl/fazyrv_alu.sv
+      - rtl/fazyrv_decode.sv
+      - rtl/fazyrv_decode_mem1.sv
+      - rtl/fazyrv_shftreg.sv
+      - rtl/fazyrv_ram_dp.sv
+      - rtl/fazyrv_ram_sp.sv
+      - rtl/fazyrv_csr.sv
+      - rtl/fazyrv_rf_lut.sv
+      - rtl/fazyrv_rf.sv
+      - rtl/fazyrv_pc.sv
+      - rtl/fazyrv_cntrl.sv
+      - rtl/fazyrv_spm_a.sv
+      - rtl/fazyrv_spm_d.sv
+      - rtl/fazyrv_core.sv
+      - rtl/fazyrv_top.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    filesets:
+      - core
+    parameters:
+      - CHUNKSIZE
+      - CONF
+      - MTVAL
+      - BOOTADR
+      - RFTYPE
+      - RISCV_FORMAL
+    toplevel: ["is_toplevel? (fazyrv_top)"]
+
+  lintslang:
+    <<: *default
+    description: Lint the design with Slang
+    default_tool: slang
+    tools:
+      slang:
+        mode:
+          - lint
+    toplevel: fazyrv_top
+
+  lintsv:
+    <<: *default
+    description: Lint the design with Verilator
+    default_tool: verilator
+    tools:
+      verilator:
+        mode: lint-only
+        verilator_options:
+          - "-Wall"
+          - "-Wno-GENUNNAMED"
+          - "-Wno-WIDTHEXPAND"
+          - "-Wno-UNUSEDPARAM"
+          - "-Wno-UNUSEDSIGNAL"
+          - "-Wno-WIDTHTRUNC"
+          - "-Wno-CASEOVERLAP"
+    toplevel: fazyrv_top
+
+
+parameters:
+  CHUNKSIZE:
+    datatype    : int
+    description : Bit width of the data path; either 1, 2, 4, 8.
+    paramtype   : vlogparam
+  
+  CONF:
+    datatype    : str
+    description : Feature set of the core; either "MIN", "INT", or "STR".
+    paramtype   : vlogparam
+
+  MTVAL:
+    datatype    : int
+    description : Initial value of the MTVAL CSR.
+    paramtype   : vlogparam
+
+  BOOTADR:
+    datatype    : int
+    description : First PC value to the fetched.
+    paramtype   : vlogparam
+
+  RFTYPE:
+    datatype    : str
+    description : Implementation of regfile; either "LOGIC", "BRAM", "BRAM_BP", "BRAM_DP", or "BRAM_DP_BP"
+    paramtype   : vlogparam
+
+  RISCV_FORMAL:
+    datatype    : bool
+    paramtype   : vlogdefine

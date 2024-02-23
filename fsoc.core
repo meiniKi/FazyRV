@@ -1,0 +1,206 @@
+CAPI=2:
+name: ::fsoc:0.1.0
+description: A minimal SoC using the FazyRV core
+
+filesets:
+  mem_files:
+    files:
+      - soc/sw/firmware.hex: {copyto: firmware.hex}
+    file_type: user
+
+  fazyrv_tb:
+    files:
+      - soc/tb/fsoc_tb.sv
+    file_type: systemVerilogSource
+
+  soc:
+    files:
+      - soc/rtl/wb_ram.sv
+      - soc/rtl/gpio.sv
+      - soc/rtl/fsoc.sv
+    file_type: systemVerilogSource
+    depend: [fazyrv]
+
+  verilator_tb:
+    files:
+      - soc/tb/fsoc_sim.sv
+      - soc/tb/fsoc_tb.cpp: {file_type: cppSource}
+    file_type: systemVerilogSource
+
+  ice40_ref:
+    files:
+      - soc/synth/ice40_ref.pcf: {file_type: PCF}
+
+  ecp5_ref:
+    files:
+      - soc/synth/ecp5_ref.lpf: {file_type: LPF}
+
+  gowin_ref:
+    files:
+      - soc/synth/gowin_ref.cst: {file_type: CST}
+
+  xilinx_ref:
+    files:
+      - soc/synth/xilinx_ref.xdc: {file_type: xdc}
+      - soc/synth/xilinx_opt_size.tcl: {file_type : tclSource}
+
+  xilinx_speed_ref:
+    files:
+      - soc/synth/xilinx_ref.xdc: {file_type: xdc}
+
+  gatemate_ref:
+    files:
+      - soc/synth/gatemate_ref.ccf: {file_type: CCF}
+
+targets:
+  verilator_tb:
+    filesets: [soc, verilator_tb]
+    flow: sim
+    flow_options:
+      tool: verilator
+      verilator_options:
+        - "--trace-fst"
+        - "--Wno-WIDTHTRUNC"
+        - "--timescale-override 1us/1ns"
+    parameters:
+      - RISCV_FORMAL
+      - CHUNKSIZE
+      - CONF
+      - MTVAL
+      - BOOTADR
+      - RFTYPE
+      - MEMFILE
+      - MEMSIZE
+      - SIM
+      - DEBUG
+      - SIGNATURE
+    toplevel: fsoc_sim
+
+  ice40_ref:
+    default_tool: icestorm
+    description: Reference implementation for iCE40 to track the area of FazyRV
+    filesets: [soc, ice40_ref]
+    parameters: [MEMSIZE=64, GPOCNT=1, CHUNKSIZE, CONF, RFTYPE, MEMDLY1]
+    tools:
+      icestorm:
+        nextpnr_options: [--hx8k, --package, ct256, --freq, 10]
+        pnr: next
+    toplevel: fsoc
+
+  ecp5_ref:
+    default_tool: trellis
+    description: Reference implementation for ECP5 to track the area of FazyRV
+    filesets: [soc, ecp5_ref]
+    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE, ]
+    tools:
+      trellis:
+        nextpnr_options: [--um5g-85k, --package, CABGA381, --speed, 8, --freq, 10]
+    toplevel: fsoc
+
+  gowin_ref:
+    default_tool: apicula
+    description: Reference implementation for Gowin LittleBee to track the area of FazyRV
+    filesets: [soc, ecp5_ref]
+    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE]
+    tools:
+      apicula:
+        device: GW1N-LV1QN48C6/I5
+        nextpnr_options: [--freq, 10]
+    toplevel: fsoc
+    
+  gatemate_ref:
+    default_tool: gatemate
+    description: Reference implementation for GateMate to track the area of FazyRV
+    filesets: [soc, gatemate_ref]
+    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE]
+    tools:
+      gatemate:
+        device: CCGM1A1
+        p_r_options: [--speed, "10", -tm, "2"]
+    toplevel: fsoc
+
+  xilinx_ref:
+    description: Reference implementation for 7-Series to track the area of FazyRV
+    default_tool: vivado
+    filesets: [soc, xilinx_ref]
+    tools:
+      vivado:
+        part: xc7a35tcpg236-1
+    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE]
+    toplevel: fsoc
+
+  artixref:
+    description: Artix reference
+    default_tool: vivado
+    filesets: [soc, artixref]
+    tools:
+      vivado:
+        part: xc7a35tcpg236-1
+    parameters:
+      - CHUNKSIZE
+      - CONF
+      - RFTYPE
+      - MEMSIZE
+    toplevel: fsoc
+
+parameters:
+  CHUNKSIZE:
+    datatype    : int
+    description : Bit width of the data path.
+    paramtype   : vlogparam
+  
+  CONF:
+    datatype    : str
+    description : Feature set of the core.
+    paramtype   : vlogparam
+
+  MEMDLY1:
+    datatype    : int
+    description : Use MEMDLY1
+    paramtype   : vlogparam
+
+  MTVAL:
+    datatype    : int
+    description : Initial value of the MTVAL CSR.
+    paramtype   : vlogparam
+
+  BOOTADR:
+    datatype    : int
+    description : First PC value to the fetched.
+    paramtype   : vlogparam
+
+  RFTYPE:
+    datatype    : str
+    description : Implementation of regfile; either "LOGIC", "BRAM", "BRAM_BP", "BRAM_DP", or "BRAM_DP_BP".
+    paramtype   : vlogparam
+
+  RISCV_FORMAL:
+    datatype    : bool
+    paramtype   : vlogdefine
+
+  SIM:
+    datatype    : bool
+    paramtype   : vlogdefine
+  
+  SIGNATURE:
+    datatype    : bool
+    paramtype   : vlogdefine
+
+  DEBUG:
+    datatype    : bool
+    paramtype   : vlogdefine
+
+  MEMFILE:
+    datatype    : str
+    description : Preload RAM with hex.
+    paramtype   : vlogparam
+
+  MEMSIZE:
+    datatype    : int
+    description : Size of memory in bytes.
+    paramtype   : vlogparam
+
+  GPOCNT:
+    datatype    : int
+    description : Number of outputs.
+    paramtype   : vlogparam

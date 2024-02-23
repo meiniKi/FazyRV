@@ -1,0 +1,5 @@
+
+set_io clk_i C13
+set_io rst_in A15
+set_io gpi_i E9
+set_io gpo_o C11
