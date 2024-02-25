@@ -4,6 +4,8 @@ This commit archives the initial implementation of FazyRV. **We highly recommend
 
 ## Initial Implementation Results
 
+All results below refer to the implementation of _fsoc_. The minimal reference SoC uses the FazyRV core and aims to provide a representative area for a potential target application.
+
 ### nextpnr-ice40
 
 ```
