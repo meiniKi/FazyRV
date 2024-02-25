@@ -258,7 +258,7 @@ _impl.soc.%: $(SRC_DESIGN) $(SRC_SYNTH)
 	@case ${ARCH} in \
 		gatemate) $(YOSYS) -l $(WORK_DIR_SOC)/$*/yosys_$*.log -p "read_verilog -sv -defer $^; chparam -set CHUNKSIZE $(CHUNKSIZE) $(TOP_MODULE_SOC); chparam -set GPOCNT 1 $(TOP_MODULE_SOC); chparam -set MEMDLY1 0 $(TOP_MODULE_SOC); chparam -set CONF \"$(CONF)\" $(TOP_MODULE_SOC); chparam -set RFTYPE \"$(RF)\" $(TOP_MODULE_SOC); synth_$(ARCH) -top $(TOP_MODULE_SOC); synth_$(ARCH) -top $(TOP_MODULE_SOC) -json $(WORK_DIR_SOC)/$*/$*.json -vlog $(WORK_DIR_SOC)/$*/$*.v" && \
 					$(GATEMATE_PR) --speed 10 -tm 2 -ccf soc/synth/gatemate_ref.ccf -i $(WORK_DIR_SOC)/$*/$*.v > $(WORK_DIR_SOC)/$*/gm_pr_$*.log ;; \
-		*) fusesoc run --target=$(ARCH)_ref --build --work-root=$(WORK_DIR_SOC)/$* fsoc --CHUNKSIZE=$(CHUNKSIZE) --CONF=\"$(CONF)\" --RFTYPE=\"$(RF)\" ;; \
+		*) fusesoc run --target=$(ARCH)_ref --build --work-root=$(WORK_DIR_SOC)/$* fsoc --CHUNKSIZE=$(CHUNKSIZE) --CONF=$(CONF) --RFTYPE=$(RF) ;; \
 	esac
 
 # param: <ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
