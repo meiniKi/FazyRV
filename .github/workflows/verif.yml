@@ -61,7 +61,7 @@ jobs:
   cov_insn:
     name: Cover insn checks
     runs-on: prunner
-    needs: riscof
+    needs: rvtests
     steps:
     - name: OSS-CAD-Suite version
       run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
@@ -85,7 +85,7 @@ jobs:
   cov_reg:
     name: Cover reg checks
     runs-on: prunner
-    needs: cov_insn
+    needs: rvtests
     steps:
     - name: OSS-CAD-Suite version
       run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
@@ -109,7 +109,7 @@ jobs:
   bmc_insn:
     name: BMC insn checks
     runs-on: prunner
-    needs: cov_reg
+    needs: rvtests
     steps:
     - name: OSS-CAD-Suite version
       run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
@@ -133,7 +133,7 @@ jobs:
   bmc_reg:
     name: BMC reg checks
     runs-on: prunner
-    needs: bmc_insn
+    needs: rvtests
     steps:
     - name: OSS-CAD-Suite version
       run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV

@@ -68,37 +68,4 @@ jobs:
         run: |
           make report.soc.all TARGET_ARCH=ecp5
           make report.md TARGET_ARCH=ecp5 >> $GITHUB_STEP_SUMMARY
-        
-  impl_gowin:
-    name: Gowin Reference Implementation
-    runs-on: prunner
-    steps:
-      - name: OSS-CAD-Suite version
-        run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-02/oss-cad-suite-linux-x64-20240202.tgz" >> $GITHUB_ENV
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-
-      - name: pip packages
-        run: pip3 install -r requirements.txt
-
-      - name: fusesoc library
-        run: |
-          fusesoc library add fazyrv .
-          fusesoc library add fsoc .
-
-      - name: OSS CAD Suite
-        uses: ./.github/workflows/setup-oss-cad
-        with:
-          from_url: ${{ env.oss_url }}
-
-      - name: Run implementation
-        run: |
-          make report.soc.all TARGET_ARCH=gowin
-          make report.md TARGET_ARCH=gowin >> $GITHUB_STEP_SUMMARY
 
