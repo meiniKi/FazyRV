@@ -1,0 +1,12 @@
+IO_LOC  "clk_i" 35;
+IO_PORT "clk_i" IO_TYPE=LVCMOS33;
+
+IO_LOC  "rst_in" 15;
+IO_PORT "rst_in" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpi_i" 16;
+IO_PORT "gpi_i" IO_TYPE=LVCMOS33;
+
+IO_LOC  "gpo_o" 17;
+
+IO_PORT "gpi_i" IO_TYPE=LVCMOS33;

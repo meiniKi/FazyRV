@@ -1,0 +1,4 @@
+Pin_in  "clk_i"  Loc = "IO_SB_A8"|SCHMITT_TRIGGER=true;
+Pin_in  "rst_in" Loc = "IO_EB_B0";
+Pin_out "gpo_o"  Loc = "IO_EB_B1";
+Pin_in  "gpi_i"  Loc = "IO_SB_B0"| PULLDOWN=true;

@@ -1,0 +1,1 @@
+set_property strategy Flow_AreaOptimized_high [get_runs synth_1]
