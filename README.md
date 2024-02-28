@@ -42,7 +42,7 @@ FazyRV is contained in `rtl` and licensed under a permissive MIT license.
 
 The data flow through the core can be outlined as follows:
 <p align="center">
-  <img src="./doc/block.svg" alt="block diagram" style="width:500px;"/>
+  <img src="./doc/block.png" alt="block diagram" style="width:550px;"/>
 </p>
 
 
@@ -258,4 +258,4 @@ Please feel free to discuss and open an issue and/or pull request.
 
 ## Licensing
 
-The core in the folder `rtl` is licensed under the MIT license. This license may _not_ apply to the remainder of the repository.
+The FazyRV core (`rtl/*`) is licensed under the MIT license. This license may _not_ apply to the remainder of the repository.
