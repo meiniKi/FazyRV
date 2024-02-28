@@ -242,7 +242,6 @@ python3 fuzz.py --espresso_file ../decoder --riscvtests_dir ../../../sim --riscv
 > [!TIP]
 > This work will be presented at the Computing Frontiers 2024 conference. A research paper containing our design objectives, an insight into the design and trade-offs, a comparison with similar cores, and an in-depth evaluation will be **available soon**.
 
-
 ## TODOs <a name="todos"></a>
 
 - [ ] Workflow: caching, tool versions, artifacts, dependence on some local tools
@@ -256,3 +255,7 @@ python3 fuzz.py --espresso_file ../decoder --riscvtests_dir ../../../sim --riscv
 - [ ] More documentation
 
 Please feel free to discuss and open an issue and/or pull request.
+
+## Licensing
+
+The core in the folder `rtl` is licensed under the MIT license. This license may _not_ apply to the remainder of the repository.
