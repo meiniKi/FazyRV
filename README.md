@@ -1,3 +1,5 @@
+<img align="right" src="doc/logos/fazyrv.svg" alt="Spacing" width="18%" height="18%">
+
 # FazyRV -- A Scalable RISC-V Core
 
 A minimal-area RISC-V core with a scalable data path to 1, 2, 4, or 8 bits and manifold variants.
@@ -11,7 +13,7 @@ A minimal-area RISC-V core with a scalable data path to 1, 2, 4, or 8 bits and m
 - [Tests and Verification](#verif)
     - [riscv-tests](#riscvtests)
     - [RISCOF](#riscof)
-    - [Module-level Formal Checks](#formal)
+    - [Module-Level Formal Checks](#formal)
     - [riscv-formal](#riscv-formal)
 - [Benchmarks](#benchmarks)
     - [Embench](#embench)
@@ -21,10 +23,22 @@ A minimal-area RISC-V core with a scalable data path to 1, 2, 4, or 8 bits and m
 
 ## Introduction <a name="intro"></a>
 
-FazyRV is a minimal-area RISC-V RV32 core with inherent scalability to a data path of 1, 2, 4, or 8 bits. Depending on the chosen data path width (aka. chunk size), either 1, 2, 4, or 8 data bits are processed at a time. This allows a trade-off between area vs. performance at synthesis time. Moreover, each chunk size can be combined with manifold variants to find the best-fitting configuration and trade-off for given system requirements and technology.
+FazyRV is a minimal-area RISC-V RV32 core with inherent scalability. The data path can be set to a width of either 1, 2, 4, or 8 bits to process smaller _chunks_ of the operands each clock cycle. Scaling the chunk size allows a trade-off between area and performance at synthesis time. Moreover, each chunk size can be combined with manifold variants to find the best-fitting configuration and trade-off for given system requirements and technology. In contrast to other approaches, FazyRV tries to avoid manual optimization at the gate level (see also [Decoder](#decoder)).
+
+### Area / Resource Demand
+
+The plot below tracks the resource demand of the FazyRV core (left) and a minimal reference SoC (right) for an iCE40 architecture. Note that only a few variants are plotted for brevity.
+
+<p align="center">
+  <img src="./doc/area.svg" alt="FazyRV and fsoc areas"/>
+</p>
+
+### Organization
 
 FazyRV is contained in `rtl` and licensed under a permissive MIT license.
-`rtl/fazyrv_top.sv` is the top module and instantiates the FazyRV core (`rtl/fazyrv_core.sv`) alongside the register file.
+`rtl/fazyrv_top.sv` is the top module and instantiates the FazyRV core (`rtl/fazyrv_core.sv`) alongside the register file. The reference SoC (fsoc) is located in `soc/rtl` along with a constraint file for common architectures.
+
+
 
 The data flow through the core can be outlined as follows:
 <p align="center">
@@ -32,9 +46,22 @@ The data flow through the core can be outlined as follows:
 </p>
 
 
+### Acknowledgement
+
+<p>
+  <img align="right" src="doc/logos/tugraz.png" alt="TU Graz Logo" width="14%" height="14%">
+  <img align="right" src="doc/logos/spacing.png" alt="Spacing" width="1%" height="1%">
+  <img align="right" src="doc/logos/eas.png" alt="EAS Logo" width="8%" height="8%">
+</p>
+
+
+This repository includes results of research in the [Embedded Architectures & Systems](https://iti.tugraz.at/eas) (EAS) Group at [Graz University of Technology](https://www.tugraz.at). 
+
+&nbsp;
+
 ## Design Variants <a name="vars"></a>
 
-`CHUNKSIZE` sets the data path width of FazyRV and, thus, primarily determines the required cycles per instruction (CPI). When the chunk size is set to 1, a single bit is processed per clock cycle, and an addition, e.g., requires 32 cycles (without fetch and decode) to process the operands. It reduces to 4 clock cycles when 8 bits are processed simultaneously, i.e., `CHUNKSIZE = 8`. The latter variant, however, comes with an increased area.
+`CHUNKSIZE` sets the data path width of FazyRV and, thus, primarily determines the required Cycles per Instruction (CPI). When the chunk size is set to 1, a single bit is processed per clock cycle, and an addition, e.g., requires 32 cycles (without fetch and decode) to process the operands. It reduces to 4 clock cycles when 8 bits are processed simultaneously, i.e., `CHUNKSIZE = 8`. The latter variant, however, comes with an increased area demand.
 
 ```
 CHUNKSIZE   := 1 | 2 | 4 | 8
@@ -46,7 +73,7 @@ The configuration (`CONF`) determines the functionality of the core. In the `MIN
 CONF        := MIN | INT | CSR
 ```
 
-The register file type (`RFTYPE`) influences both the area and the performance. It selects how registers are implemented in FazyRV. The most area-intensive option is `LOGIC`. It implements the registers in logic elements such as LUT RAM or FF RAM. Due to the large area, this option is primarily used for testing purposes and _cannot_ be combined with all variants. `BRAM` implements the register file in block RAM with a single read port. Thus, operands must be fetched sequentially, leading to a performance decrease compared to a dual-port RAM implementation (`BRAM_DP`). The `BP` variants `BRAM_BP` and `BRAM_DP_BP` additionally instantiate a bypass multiplexer to make the operands accessible to the core one cycle in advance. While this improves the performance, more area is consumed.
+The register file type (`RFTYPE`) influences both the area and the performance. It selects how registers are implemented in FazyRV. The most area-intensive option is `LOGIC`. It implements the registers in logic elements such as LUT RAM or FF RAM. Due to the large area, this option is primarily used for testing purposes and _cannot_ be combined with all variants. `BRAM` implements the register file in block RAM with a single read port. Thus, operands must be fetched sequentially, leading to a performance decrease compared to a dual-port RAM implementation (`BRAM_DP`). The `BP` variants `BRAM_BP` and `BRAM_DP_BP` additionally instantiate a bypass multiplexer to make the operands accessible to the core one cycle in advance. While this improves the performance due to the saved clock cycle per instruction, more area may be consumed.
 
 ```
 RFTYPE      := LOGIC | BRAM | BRAM_BP | BRAM_DP | BRAM_DP_BP
@@ -128,7 +155,7 @@ make report.riscvtests.all
 
 ### Run RISCOF <a name="riscof"></a>
 
-The RISCOF framework provides more extensive simulation-based design tests. You can run the test either for one variant, or use `riscof.all` to run  the tests for a selected subset of all variants.
+The RISCOF framework provides more extensive simulation-based design tests. You can run the test either for one variant or use `riscof.all` to run  the tests for a selected subset of all variants.
 
 ```shell
 # RISCOF
@@ -142,8 +169,8 @@ make riscof.prepare
 make riscof.all
 ```
 
-### Module-level Formal Checks <a name="formal"></a>
-The ALU (`rtl/fazyrv_alu.sv`) and the `spm_d` module (`rtl/fazyrv_spm_d.sv`) are checked by BMC in a formal test bench. The test benches and `.sby` files are located in `fv/alu` and `fv/spm_d`, respectively. While these were primarily used to support a formal verification test-driven development when the core was not ready to be checked by `riscv-formal`. However, they remain important to verify changes and optimizations. The chunk size is set to 8 by default. If required, please update the local parameter `parameter CHUNKSIZE` in the formal test benches accordingly.
+### Module-Level Formal Checks <a name="formal"></a>
+The ALU (`rtl/fazyrv_alu.sv`) and the `spm_d` module (`rtl/fazyrv_spm_d.sv`) are checked by BMC in a formal test bench. The test benches and `.sby` files are located in `fv/alu` and `fv/spm_d`, respectively. These were primarily used to support a formal verification test-driven development when the core was not ready to be checked by `riscv-formal`. However, they remain important to verify changes and optimizations. The chunk size is set to 8 by default. If required, please update the local parameter `parameter CHUNKSIZE` in the formal test benches accordingly.
 
 ```shell
 # alu
@@ -159,7 +186,7 @@ sby -f fazyrv_spm_d_cov.sby
 
 ### riscv-formal <a name="riscv-formal"></a>
 
-In addition to simulation-based test, formal checks are applied using riscv-formal. Due to the exponential run time, formal checks are primarily considered for larger chunk sizes. Also, the depth is limited. 
+In addition to simulation-based tests, formal checks are applied using riscv-formal. Due to the exponential run time, formal checks are primarily considered for larger chunk sizes. Also, the depth is limited. 
 
 ```shell
 # insn checks
@@ -213,11 +240,12 @@ python3 fuzz.py --espresso_file ../decoder --riscvtests_dir ../../../sim --riscv
 ## Design Insights, Evaluation, and Results <a name="results"></a>
 
 > [!TIP]
-> A research article containing our design objectives, an insight into the design and trade-offs, a comparison with similar cores and an in-depth evaluation will be **published soon**.
+> This work will be presented at the Computing Frontiers 2024 conference. A research paper containing our design objectives, an insight into the design and trade-offs, a comparison with similar cores, and an in-depth evaluation will be **available soon**.
 
 
 ## TODOs <a name="todos"></a>
 
+- [ ] Workflow: caching, tool versions, artifacts, dependence on some local tools
 - [ ] Litex support for FazyRV
 - [ ] RVC extension (compressed instructions)
 - [ ] INT variant
@@ -227,4 +255,4 @@ python3 fuzz.py --espresso_file ../decoder --riscvtests_dir ../../../sim --riscv
 - [ ] Optimization
 - [ ] More documentation
 
-Please feel free to discuss and open a Issue and/or Pull Request.
+Please feel free to discuss and open an issue and/or pull request.

@@ -22,14 +22,28 @@ TARGET_ARCH ?= ice40
 # Synthesis combinations 
 #
 
-SYNTH_BDWITHS := 1 2 4 8
-SYNTH_CONFS := MIN INT
-SYNTH_RF := BRAM BRAM_BP BRAM_DP BRAM_DP_BP
+SYNTH_CHUNKSIZES 	:= 1 2 4 8
+SYNTH_CONFS 		:= MIN INT
+SYNTH_RF 			:= BRAM BRAM_BP BRAM_DP BRAM_DP_BP
 
 # Synth param:  <CHUNKSIZE>-<CONF>-<RFTYPE>
-SYNTH_PARAMS := $(foreach bdwidth,$(SYNTH_BDWITHS),\
+SYNTH_PARAMS := $(foreach bdwidth,$(SYNTH_CHUNKSIZES),\
 				$(foreach conf,$(SYNTH_CONFS),\
 				$(foreach rf,$(SYNTH_RF),$(bdwidth)-$(conf)-$(rf))))
+
+
+################################
+# Plot combinations 
+#
+
+PLOT_CHUNKSIZES := 1 2 4 8
+PLOT_CONFS 		:= MIN
+PLOT_RF 		:= BRAM BRAM_DP_BP
+
+# Plot param:  <CHUNKSIZE>-<CONF>-<RFTYPE>
+PLOT_PARAMS := $(foreach bdwidth,$(PLOT_CHUNKSIZES),\
+				$(foreach conf,$(PLOT_CONFS),\
+				$(foreach rf,$(PLOT_RF),$(bdwidth)-$(conf)-$(rf))))
 
 
 ################################
@@ -74,6 +88,7 @@ WORK_DIR_EMBENCH	:= $(WORK_DIR_MAIN)/work_rvtests
 WORK_DIR_RISCOF		:= $(WORK_DIR_MAIN)/work_riscof
 
 SUMMARY_DIR_SOC			:= $(WORK_DIR_MAIN)/summary_fsoc_soc
+SUMMARY_DIR_CORE		:= $(WORK_DIR_MAIN)/summary_fazyrv
 SUMMARY_DIR_RISCOF 		:= $(WORK_DIR_MAIN)/summary_riscof
 SUMMARY_DIR_RISCVTESTS 	:= $(WORK_DIR_MAIN)/summary_riscvtests
 
@@ -151,7 +166,7 @@ riscof.run.%: $(SRC_DESIGN) $(SRC_SYNTH)
 	export RISCOF_CONF=$(CONF)
 	export RISCOF_RFTYPE=$(RF)
 	riscof testlist --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env
-	riscof run --no-browser --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env > $(SUMMARY_DIR_RISCOF)/tmp.txt 2>&1
+	riscof run --no-browser --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/tmp.txt
 	@ ! grep -q "Failed" $(SUMMARY_DIR_RISCOF)/tmp.txt
 	@echo $$? > $(SUMMARY_DIR_RISCOF)/$*.log
 	@rm $(SUMMARY_DIR_RISCOF)/tmp.txt
@@ -159,6 +174,12 @@ riscof.run.%: $(SRC_DESIGN) $(SRC_SYNTH)
 # workaround using the tmp.txt file
 
 riscof.all: $(addprefix riscof.run., $(RVTESTS_PARAMS))
+	@for log_file in $(wildcard $(SUMMARY_DIR_RISCOF)/*.log); do \
+		if [ $$(cat "$$log_file") != "0" ]; then \
+			echo "Error: $$log_file RICOF failed"; \
+			exit 1; \
+		fi; \
+	done
 
 
 ################
@@ -167,7 +188,7 @@ riscof.all: $(addprefix riscof.run., $(RVTESTS_PARAMS))
 
 _fv.rvformal.prepare:
 	if [ ! -d riscv-formal ]; then \
-		echo "[Error] riscv-formal does not exist. Are submodules initialized?" \
+		echo "[Error] riscv-formal does not exist. Are submodules initialized?"; \
 		exit 1; \
 	fi
 	mkdir -p riscv-formal/cores/fazyrv/rtl
@@ -258,6 +279,7 @@ _impl.soc.%: $(SRC_DESIGN) $(SRC_SYNTH)
 	@case ${ARCH} in \
 		gatemate) $(YOSYS) -l $(WORK_DIR_SOC)/$*/yosys_$*.log -p "read_verilog -sv -defer $^; chparam -set CHUNKSIZE $(CHUNKSIZE) $(TOP_MODULE_SOC); chparam -set GPOCNT 1 $(TOP_MODULE_SOC); chparam -set MEMDLY1 0 $(TOP_MODULE_SOC); chparam -set CONF \"$(CONF)\" $(TOP_MODULE_SOC); chparam -set RFTYPE \"$(RF)\" $(TOP_MODULE_SOC); synth_$(ARCH) -top $(TOP_MODULE_SOC); synth_$(ARCH) -top $(TOP_MODULE_SOC) -json $(WORK_DIR_SOC)/$*/$*.json -vlog $(WORK_DIR_SOC)/$*/$*.v" && \
 					$(GATEMATE_PR) --speed 10 -tm 2 -ccf soc/synth/gatemate_ref.ccf -i $(WORK_DIR_SOC)/$*/$*.v > $(WORK_DIR_SOC)/$*/gm_pr_$*.log ;; \
+		gowin) fusesoc run --target=$(ARCH)_ref --build --work-root=$(WORK_DIR_SOC)/$* fsoc --CHUNKSIZE=$(CHUNKSIZE) --CONF=$(CONF) --RFTYPE=$(RF) --GOWIN ;; \
 		*) fusesoc run --target=$(ARCH)_ref --build --work-root=$(WORK_DIR_SOC)/$* fsoc --CHUNKSIZE=$(CHUNKSIZE) --CONF=$(CONF) --RFTYPE=$(RF) ;; \
 	esac
 
@@ -286,30 +308,43 @@ _report.soc.%: _impl.soc.%
 
 # param: set TARGET_ARCH
 report.soc.all: $(addprefix _report.soc.$(TARGET_ARCH)-, $(SYNTH_PARAMS))
-	$(PYTHON) §(WORKFLOW_SCRIPT)/summary_table.py $(WORK_DIR_SOC) $(TARGET_ARCH)
+	$(PYTHON) $(WORKFLOW_SCRIPT)/summary_table.py $(SUMMARY_DIR_SOC) $(TARGET_ARCH)
 
+report.md:
+	$(PYTHON) $(WORKFLOW_SCRIPT)/summary_table_md.py $(SUMMARY_DIR_SOC) $(TARGET_ARCH)
 
-################
-# SoC synth only
+#######################
+# Track and plot sizes
 #
 
-# param: <ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
-# Synth only to quickly track the resource demand.
-_synth.soc.%: _synth.soc.%
-	@echo "${BLUE}Implementing for $*...${RESET}"
+# param: <ARCH>-<CHUNKSIZE>-<CONF>-<RF>
+_track.sizes.synth.%: $(SRC_DESIGN) $(SRC_SYNTH)
+	@echo -e "${BLUE}Synthesizing for $*...${RESET}"
 	$(eval ARCH=$(word 1,$(subst -, ,$*)))
+	$(eval CHUNKSIZE=$(word 2,$(subst -, ,$*)))
+	$(eval CONF=$(word 3,$(subst -, ,$*)))
+	$(eval RF=$(word 4,$(subst -, ,$*)))
+	@echo "CHUNKSIZE: $(CHUNKSIZE)"
 	@echo "ARCH: $(ARCH)"
-	@case ${ARCH} in \
-		ice40) $(NEXTPNR_ICE40) --freq 10 -l $(WORK_DIR_SOC)/$*/nextpnr_$*.log --json $(WORK_DIR_SOC)/$*/$*.json --pcf soc/synth/ice40_ref.pcf --asc $(WORK_DIR_SOC)/$*/$*.asc --hx8k --package ct256 ;; \
-		ecp5) $(NEXTPNR_ECP5) --freq 10 -l $(WORK_DIR_SOC)/$*/nextpnr_$*.log --json $(WORK_DIR_SOC)/$*/$*.json --lpf soc/synth/ecp5_ref.lpf --textcfg $(WORK_DIR_SOC)/$*/$*.config --um5g-85k --package CABGA381 --speed 8 ;; \
-		gowin) $(NEXTPNR_GOWIN) --freq 10 -l $(WORK_DIR_SOC)/$*/nextpnr_$*.log --json $(WORK_DIR_SOC)/$*/$*.json --cst soc/synth/gowin_ref.cst --write $(WORK_DIR_SOC)/$*/$*_pnr.json --device "GW1NR-LV9QN88PC6/I5" ;; \
-		gatemate) $(GATEMATE_PR) --speed 10 -tm 2 -ccf soc/synth/gatemate_ref.ccf -i $(WORK_DIR_SOC)/$*/$*.v > $(WORK_DIR_SOC)/$*/gm_pr_$*.log ;; \
-	esac
+	@echo "CONF: $(CONF)"
+	@echo "RF: $(RF)"
+	mkdir -p $(WORK_DIR_CORE)/$*
+	mkdir -p $(WORK_DIR_SOC)/$*
+	$(YOSYS) -q -l $(WORK_DIR_CORE)/$*/yosys_$*.log -p "read_verilog -sv -defer $^; chparam -set CHUNKSIZE $(CHUNKSIZE) $(TOP_MODULE_CORE); chparam -set CONF \"$(CONF)\" $(TOP_MODULE_CORE); chparam -set RFTYPE \"$(RF)\" $(TOP_MODULE_CORE); synth_$(ARCH) -top $(TOP_MODULE_CORE)"
+	$(YOSYS) -q -l $(WORK_DIR_SOC)/$*/yosys_$*.log -p "read_verilog -sv -defer $^; chparam -set CHUNKSIZE $(CHUNKSIZE) $(TOP_MODULE_SOC); chparam -set CONF \"$(CONF)\" $(TOP_MODULE_SOC); chparam -set RFTYPE \"$(RF)\" $(TOP_MODULE_SOC); synth_$(ARCH) -top $(TOP_MODULE_SOC)"
+	mkdir -p $(SUMMARY_DIR_CORE)
+	mkdir -p $(SUMMARY_DIR_SOC)
+	$(WORKFLOW_SCRIPT)/report_yosys_$(ARCH).sh $(WORK_DIR_CORE)/$*/yosys_$*.log > $(SUMMARY_DIR_CORE)/summary_yosys_$*
+	$(WORKFLOW_SCRIPT)/report_yosys_$(ARCH).sh $(WORK_DIR_SOC)/$*/yosys_$*.log > $(SUMMARY_DIR_SOC)/summary_yosys_$*
+
+
+track.sizes.synth: $(addprefix _track.sizes.synth.$(TARGET_ARCH)-, $(PLOT_PARAMS))
+	$(PYTHON) $(WORKFLOW_SCRIPT)/plot_track_sizes.py $(SUMMARY_DIR_CORE) $(SUMMARY_DIR_SOC) ./doc/area.svg ./doc/area.txt $(COMMIT)
 
 clean:
 	rm -vrf $(WORK_DIR_MAIN)
 	$(MAKE) -C sim clean 
 
-.PHONY: clean report.riscvtests.all embench.run riscof.all
+.PHONY: clean report.riscvtests.all embench.run riscof.all track.sizes.synth
 
 

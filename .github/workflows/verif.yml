@@ -1,0 +1,155 @@
+name: Verification
+
+on: [push, pull_request]
+
+jobs:
+  rvtests:
+    name: Run rvtests
+    runs-on: prunner
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: OSS-CAD-Suite version
+      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
+
+    - name: OSS CAD Suite
+      uses: ./.github/workflows/setup-oss-cad
+      with:
+        from_url: ${{ env.oss_url }}
+
+    - name: RISC-V Tests
+      run: make report.riscvtests.all TOOLCHAIN_PREFIX=/tools/riscv/rv32i/bin/riscv32-unknown-elf-
+
+  riscof:
+    name: Run RISCOF tests
+    runs-on: prunner
+    needs: rvtests
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: pip packages
+      run: pip install -r requirements.txt
+
+    - name: fusesoc library
+      run: |
+        fusesoc library add fazyrv .
+        fusesoc library add fsoc .
+
+    - name: OSS-CAD-Suite version
+      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
+
+    - name: OSS CAD Suite
+      uses: ./.github/workflows/setup-oss-cad
+      with:
+        from_url: ${{ env.oss_url }}
+
+    - name: RISCOF
+      run: |
+        make riscof.prepare
+        make riscof.all PATH="/tools/riscv/rv32i/bin/:/tools/sail-riscv/c_emulator/:$PATH"
+
+  cov_insn:
+    name: Cover insn checks
+    runs-on: prunner
+    needs: riscof
+    steps:
+    - name: OSS-CAD-Suite version
+      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: OSS CAD Suite
+      uses: ./.github/workflows/setup-oss-cad
+      with:
+        from_url: ${{ env.oss_url }}
+
+    - name: cov.8
+      run: make fv.rvformal.cov.insn.8
+
+    - name: cov.4
+      run: make fv.rvformal.cov.insn.4
+
+  cov_reg:
+    name: Cover reg checks
+    runs-on: prunner
+    needs: cov_insn
+    steps:
+    - name: OSS-CAD-Suite version
+      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: OSS CAD Suite
+      uses: ./.github/workflows/setup-oss-cad
+      with:
+        from_url: ${{ env.oss_url }}
+
+    - name: cov.8
+      run: make fv.rvformal.cov.reg.8
+
+    - name: cov.4
+      run: make fv.rvformal.cov.reg.4
+
+  bmc_insn:
+    name: BMC insn checks
+    runs-on: prunner
+    needs: cov_reg
+    steps:
+    - name: OSS-CAD-Suite version
+      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: OSS CAD Suite
+      uses: ./.github/workflows/setup-oss-cad
+      with:
+        from_url: ${{ env.oss_url }}
+
+    - name: bmc.8
+      run: make fv.rvformal.bmc.insn.8
+  
+    - name: bmc.4
+      run: make fv.rvformal.bmc.insn.4
+
+  bmc_reg:
+    name: BMC reg checks
+    runs-on: prunner
+    needs: bmc_insn
+    steps:
+    - name: OSS-CAD-Suite version
+      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: OSS CAD Suite
+      uses: ./.github/workflows/setup-oss-cad
+      with:
+        from_url: ${{ env.oss_url }}
+
+    - name: bmc.8
+      run: make fv.rvformal.bmc.reg.8
+
+    - name: bmc.4
+      run: make fv.rvformal.bmc.reg.4

@@ -16,3 +16,8 @@ rpds-py==0.18.0
 simplesat==0.8.2
 six==1.16.0
 zipfile2==0.0.12
+py-markdown-table==0.4.0
+ascii_graph==1.5.1
+matplotlib==3.8.3
+riscof==1.25.3
+apycula==0.11.1

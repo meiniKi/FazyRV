@@ -91,7 +91,7 @@ targets:
     default_tool: trellis
     description: Reference implementation for ECP5 to track the area of FazyRV
     filesets: [soc, ecp5_ref]
-    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE, ]
+    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE]
     tools:
       trellis:
         nextpnr_options: [--um5g-85k, --package, CABGA381, --speed, 8, --freq, 10]
@@ -100,11 +100,11 @@ targets:
   gowin_ref:
     default_tool: apicula
     description: Reference implementation for Gowin LittleBee to track the area of FazyRV
-    filesets: [soc, ecp5_ref]
-    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE]
+    filesets: [soc, gowin_ref]
+    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE, GOWIN]
     tools:
       apicula:
-        device: GW1N-LV1QN48C6/I5
+        device: GW1NR-LV9QN88PC6/I5
         nextpnr_options: [--freq, 10]
     toplevel: fsoc
     
@@ -204,3 +204,7 @@ parameters:
     datatype    : int
     description : Number of outputs.
     paramtype   : vlogparam
+
+  GOWIN:
+    datatype    : bool
+    paramtype   : vlogdefine
