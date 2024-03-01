@@ -5,13 +5,15 @@ on: [push, pull_request]
 jobs:
   impl_ice40:
     name: iCE40 Reference Implementation
-    runs-on: prunner
+    runs-on: ubuntu-latest
     steps:
-      - name: OSS-CAD-Suite version
-        run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-02/oss-cad-suite-linux-x64-20240202.tgz" >> $GITHUB_ENV
-
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: oss-cad-suite
+        uses: YosysHQ/setup-oss-cad-suite@v3
+        with:
+          version: '2024-02-02'
 
       - uses: actions/setup-python@v5
         with:
@@ -25,11 +27,6 @@ jobs:
         run: |
           fusesoc library add fazyrv .
           fusesoc library add fsoc .
-
-      - name: OSS CAD Suite
-        uses: ./.github/workflows/setup-oss-cad
-        with:
-          from_url: ${{ env.oss_url }}
 
       - name: Run implementation
         run: |
@@ -38,13 +35,15 @@ jobs:
 
   impl_ecp5:
     name: ECP5 Reference Implementation
-    runs-on: prunner
+    runs-on: ubuntu-latest
     steps:
-      - name: OSS-CAD-Suite version
-        run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-02/oss-cad-suite-linux-x64-20240202.tgz" >> $GITHUB_ENV
-
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: oss-cad-suite
+        uses: YosysHQ/setup-oss-cad-suite@v3
+        with:
+          version: '2024-02-02'
 
       - uses: actions/setup-python@v5
         with:
@@ -58,11 +57,6 @@ jobs:
         run: |
           fusesoc library add fazyrv .
           fusesoc library add fsoc .
-
-      - name: OSS CAD Suite
-        uses: ./.github/workflows/setup-oss-cad
-        with:
-          from_url: ${{ env.oss_url }}
 
       - name: Run implementation
         run: |

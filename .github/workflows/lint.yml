@@ -3,19 +3,9 @@ name: Lint FazyRV
 on: [push, pull_request]
 
 jobs:
-  lint_slang:
-    name: Lint using slang
-    runs-on: prunner
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Linting with slang
-      run: make SLANG=/tools/slang/build/bin/slang lint.slang
-
   lint_svlint:
     name: Lint using svlint
-    runs-on: prunner
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -24,4 +14,4 @@ jobs:
       run: sudo snap install svlint
 
     - name: Linting with svlint
-      run: make lint.svlint
+      run: make lint.svlint >> $GITHUB_STEP_SUMMARY

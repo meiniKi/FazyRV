@@ -5,26 +5,26 @@ on: [push, pull_request]
 jobs:
   rvtests:
     name: Run rvtests
-    runs-on: prunner
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: OSS-CAD-Suite version
-      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
-
-    - name: OSS CAD Suite
-      uses: ./.github/workflows/setup-oss-cad
+    - name: oss-cad-suite
+      uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        from_url: ${{ env.oss_url }}
+        version: '2024-02-02'
+
+    - name: gcc
+      uses: ./.github/workflows/setup-riscv-toolchain
 
     - name: RISC-V Tests
-      run: make report.riscvtests.all TOOLCHAIN_PREFIX=/tools/riscv/rv32i/bin/riscv32-unknown-elf-
+      run: make report.riscvtests.all TOOLCHAIN_PREFIX=riscv32-unknown-elf-
 
   riscof:
     name: Run RISCOF tests
-    runs-on: prunner
+    runs-on: ubuntu-latest
     needs: rvtests
     steps:
     - name: Checkout repository
@@ -45,36 +45,36 @@ jobs:
         fusesoc library add fazyrv .
         fusesoc library add fsoc .
 
-    - name: OSS-CAD-Suite version
-      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
-
-    - name: OSS CAD Suite
-      uses: ./.github/workflows/setup-oss-cad
+    - name: oss-cad-suite
+      uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        from_url: ${{ env.oss_url }}
+        version: '2024-02-02'
+
+    - name: gcc
+      uses: ./.github/workflows/setup-riscv-toolchain
+
+    - name: sail
+      uses: ./.github/workflows/setup-sail
 
     - name: RISCOF
       run: |
         make riscof.prepare
-        make riscof.all PATH="/tools/riscv/rv32i/bin/:/tools/sail-riscv/c_emulator/:$PATH"
+        make riscof.all
 
   cov_insn:
     name: Cover insn checks
-    runs-on: prunner
+    runs-on: ubuntu-latest
     needs: rvtests
     steps:
-    - name: OSS-CAD-Suite version
-      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
-
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: OSS CAD Suite
-      uses: ./.github/workflows/setup-oss-cad
+    - name: oss-cad-suite
+      uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        from_url: ${{ env.oss_url }}
+        version: '2024-02-02'
 
     - name: cov.8
       run: make fv.rvformal.cov.insn.8
@@ -84,21 +84,18 @@ jobs:
 
   cov_reg:
     name: Cover reg checks
-    runs-on: prunner
+    runs-on: ubuntu-latest
     needs: rvtests
     steps:
-    - name: OSS-CAD-Suite version
-      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
-
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: OSS CAD Suite
-      uses: ./.github/workflows/setup-oss-cad
+    - name: oss-cad-suite
+      uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        from_url: ${{ env.oss_url }}
+        version: '2024-02-02'
 
     - name: cov.8
       run: make fv.rvformal.cov.reg.8
@@ -108,21 +105,18 @@ jobs:
 
   bmc_insn:
     name: BMC insn checks
-    runs-on: prunner
+    runs-on: ubuntu-latest
     needs: rvtests
     steps:
-    - name: OSS-CAD-Suite version
-      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
-
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: OSS CAD Suite
-      uses: ./.github/workflows/setup-oss-cad
+    - name: oss-cad-suite
+      uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        from_url: ${{ env.oss_url }}
+        version: '2024-02-02'
 
     - name: bmc.8
       run: make fv.rvformal.bmc.insn.8
@@ -132,21 +126,18 @@ jobs:
 
   bmc_reg:
     name: BMC reg checks
-    runs-on: prunner
+    runs-on: ubuntu-latest
     needs: rvtests
     steps:
-    - name: OSS-CAD-Suite version
-      run: echo "oss_url=https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-02-26/oss-cad-suite-linux-x64-20240226.tgz" >> $GITHUB_ENV
-
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: OSS CAD Suite
-      uses: ./.github/workflows/setup-oss-cad
+    - name: oss-cad-suite
+      uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        from_url: ${{ env.oss_url }}
+        version: '2024-02-02'
 
     - name: bmc.8
       run: make fv.rvformal.bmc.reg.8
