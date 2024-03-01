@@ -1,0 +1,24 @@
+name: Build RISC-V riscv-gnu-toolchain
+
+runs:
+  using: composite
+  steps:
+    - id: cache-riscv-gnu-toolchain
+      uses: actions/cache@v3
+      with:
+        path: .riscv-gnu-toolchain
+        key: riscv-gnu-toolchain-${{ runner.os }}
+
+    - shell: bash
+      if: steps.cache-riscv-gnu-toolchain.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p .riscv-gnu-toolchain
+        cd .riscv-gnu-toolchain
+        wget -q -O - https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2023.09.27/riscv32-elf-ubuntu-22.04-gcc-nightly-2023.09.27-nightly.tar.gz | tar -zx --transform "s/riscv/riscv32/"
+        cd ..
+
+    - shell: bash
+      run: |
+        echo "$(pwd)/.riscv-gnu-toolchain/riscv32/bin" >> $GITHUB_PATH
+
+

@@ -239,7 +239,7 @@ class fazyrv(pluginTemplate):
         # for debug purposes if you would like stop the DUT plugin after compilation, you can
         # comment out the lines below and raise a SystemExit
 
-        objcopy_run = f'riscv64-unknown-elf-objcopy -O binary {elf} {fname}.bin'
+        objcopy_run = f'riscv32-unknown-elf-objcopy -O binary {elf} {fname}.bin'
         utils.shellCommand(objcopy_run).run(cwd=test_dir)
 
         self.makehex(f"{test_dir}/{fname}.bin", f"{test_dir}/{fname}.hex")
