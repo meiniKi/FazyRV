@@ -167,7 +167,7 @@ riscof.run.%: $(SRC_DESIGN) $(SRC_SYNTH)
 	export RISCOF_RFTYPE=$(RF)
 	riscof testlist --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env
 	riscof run --no-browser --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/tmp.txt
-	@ ! grep -q "Failed" $(SUMMARY_DIR_RISCOF)/tmp.txt
+	@ ! grep -q -e "Failed" -e "ERROR" $(SUMMARY_DIR_RISCOF)/tmp.txt
 	@echo $$? > $(SUMMARY_DIR_RISCOF)/$*.log
 	@rm $(SUMMARY_DIR_RISCOF)/tmp.txt
 # riscof exit code does not report failures, see Issue #102
