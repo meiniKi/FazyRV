@@ -151,7 +151,7 @@ Execute the tests with the make target below by replacing the `<CHUNKSIZE>`, `<C
 # riscv-tests
 make sim.riscvtests.<CHUNKSIZE>-<CONF>-<RFTYPE>
 # e.g.,
-make sim.riscvtests.8-MIN-BRAN
+make sim.riscvtests.8-MIN-BRAM
 # or
 make report.riscvtests.all
 ```
