@@ -133,7 +133,11 @@ make report.soc.all
 
 ### Litex <a name="litex"></a>
 
-Litex support is still missing but has a high priority. Check out our [TODOs](#todos) and feel free to open a pull request.
+[LiteX](https://github.com/enjoy-digital/litex) supports FazyRV with the following options: `--cpu-chunksize` to set the chunk size (`1`, `2`, `4`, or `8`), `--cpu-conf` to set the configuration (`MIN`, `INT`, or `CSR`) and `--cpu-rftype` to set the register file type (`LOGIC`, `BRAM`, `BRAM_BP`, `BRAM_DP`, or `BRAM_DP_BP`).
+
+```shell
+litex_sim --cpu-type=fazyrv --cpu-chunksize=4 --cpu-rftype=LOGIC
+```
 
 ## Tests and Verification <a name="verif"></a>
 
@@ -145,9 +149,9 @@ Execute the tests with the make target below by replacing the `<CHUNKSIZE>`, `<C
 
 ```shell
 # riscv-tests
-make sim.rivtests.<CHUNKSIZE>-<CONF>-<RFTYPE>
+make sim.riscvtests.<CHUNKSIZE>-<CONF>-<RFTYPE>
 # e.g.,
-make sim.rivtests.8-MIN-BRAN
+make sim.riscvtests.8-MIN-BRAM
 # or
 make report.riscvtests.all
 ```
@@ -245,7 +249,6 @@ python3 fuzz.py --espresso_file ../decoder --riscvtests_dir ../../../sim --riscv
 ## TODOs <a name="todos"></a>
 
 - [ ] Workflow: caching, tool versions, artifacts, dependence on some local tools
-- [ ] Litex support for FazyRV
 - [ ] RVC extension (compressed instructions)
 - [ ] INT variant
 - [ ] CSR variant
