@@ -95,7 +95,20 @@ assign add_vec = {{(ADD_VEC_WIDTH-3){1'b0}}, inc_i, 2'b00};
 
 assign carry_vec[0] = carry_r[0];
 
-assign pc_n = shift_i ? {din_i, pc_r[31:CHUNKSIZE]} : pc_r;
+
+// Insert sky130 buffers manually to achieve a higher
+// placement density. Inspired by MichaelBell/tinyQV
+// www.github.com/MichaelBell/tinyQV/blob/69ce898bf1122e91a3114f3f0fe8e4bdf242f7f0/cpu/register.v#L58
+//
+
+logic [31-CHUNKSIZE:0] pc_dlyd;
+`ifdef SKY130
+  sky130_fd_sc_hd__dlygate4sd3_1 i_buf[31-CHUNKSIZE:0] ( .X(pc_dlyd), .A(pc_r[31:CHUNKSIZE]) );
+`else
+  buf #1 i_buf[31:CHUNKSIZE] (pc_dlyd, pc_r[31:CHUNKSIZE]);
+`endif
+
+assign pc_n = shift_i ? {din_i, pc_dlyd} : pc_r;
 
 always_ff @(posedge clk_i) begin
   if (~rst_in) begin
