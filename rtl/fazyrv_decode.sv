@@ -71,8 +71,8 @@
 //                        (may be ignored, depending on CONF).
 
 module fazyrv_decode #(
-  parameter CHUNKSIZE,
-  parameter CONF,
+  parameter CHUNKSIZE = 2,
+  parameter CONF = "MIN",
   parameter RST = "MIN"
 ) (
   input  logic              clk_i,
