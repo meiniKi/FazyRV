@@ -44,7 +44,7 @@ logic [31-CHUNKSIZE:0] reg_dlyd;
 `ifdef SKY130
   sky130_fd_sc_hd__dlygate4sd3_1 i_buf[31-CHUNKSIZE:0] ( .X(reg_dlyd), .A(reg_r[31:CHUNKSIZE]) );
 `elsif SIM
-  buf #1 i_buf[31-CHUNKSIZE:0] (reg_dlyd, reg_r[31:CHUNKSIZE]);
+  buf i_buf[31-CHUNKSIZE:0] (reg_dlyd, reg_r[31:CHUNKSIZE]);
 `else
   assign reg_dlyd = reg_r[31:CHUNKSIZE];
 `endif

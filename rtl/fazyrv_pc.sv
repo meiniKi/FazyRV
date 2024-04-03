@@ -105,7 +105,7 @@ logic [31:0] pc_dlyd;
 `ifdef SKY130
   sky130_fd_sc_hd__dlygate4sd3_1 i_buf[31:0] ( .X(pc_dlyd), .A(pc_r) );
 `elsif SIM
-  buf #1 i_buf[31:0] (pc_dlyd, pc_r);
+  buf i_buf[31:0] (pc_dlyd, pc_r);
 `else
   assign pc_dlyd = pc_r; 
 `endif
