@@ -101,14 +101,14 @@ assign carry_vec[0] = carry_r[0];
 // www.github.com/MichaelBell/tinyQV/blob/69ce898bf1122e91a3114f3f0fe8e4bdf242f7f0/cpu/register.v#L58
 //
 
-logic [31-CHUNKSIZE:0] pc_dlyd;
+logic [31:0] pc_dlyd;
 `ifdef SKY130
-  sky130_fd_sc_hd__dlygate4sd3_1 i_buf[31-CHUNKSIZE:0] ( .X(pc_dlyd), .A(pc_r[31:CHUNKSIZE]) );
+  sky130_fd_sc_hd__dlygate4sd3_1 i_buf[31:0] ( .X(pc_dlyd), .A(pc_r) );
 `else
-  buf #1 i_buf[31:CHUNKSIZE] (pc_dlyd, pc_r[31:CHUNKSIZE]);
+  buf #1 i_buf[31:0] (pc_dlyd, pc_r);
 `endif
 
-assign pc_n = shift_i ? {din_i, pc_dlyd} : pc_r;
+assign pc_n = shift_i ? {din_i, pc_dlyd[31:CHUNKSIZE]} : pc_dlyd;
 
 always_ff @(posedge clk_i) begin
   if (~rst_in) begin
