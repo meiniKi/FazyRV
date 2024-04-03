@@ -104,8 +104,10 @@ assign carry_vec[0] = carry_r[0];
 logic [31:0] pc_dlyd;
 `ifdef SKY130
   sky130_fd_sc_hd__dlygate4sd3_1 i_buf[31:0] ( .X(pc_dlyd), .A(pc_r) );
-`else
+`elsif SIM
   buf #1 i_buf[31:0] (pc_dlyd, pc_r);
+`else
+  assign pc_dlyd = pc_r; 
 `endif
 
 assign pc_n = shift_i ? {din_i, pc_dlyd[31:CHUNKSIZE]} : pc_dlyd;
