@@ -56,11 +56,18 @@ module fazyrv_rf_lut #( parameter CHUNKSIZE=2 )
 //       by only shifting rs1, rs2, and rd
 // r0 will be optimized by the tools
 
-logic [CHUNKSIZE-1:0] rdat [32];
 logic [31:0]          we;
 
+`ifdef TT06_SKY130_RVE
+logic [CHUNKSIZE-1:0] rdat [16];
+assign ra_o   = rdat[rs1_i[3:0]];
+assign rb_o   = rdat[rs2_i[3:0]];
+`else
+logic [CHUNKSIZE-1:0] rdat [32];
 assign ra_o   = rdat[rs1_i];
 assign rb_o   = rdat[rs2_i];
+`endif
+
 
 `ifdef RISCV_FORMAL
   logic [31:0] dbg [32];
@@ -85,9 +92,6 @@ generate
   genvar i;
   assign rdat[0] = 32'b0;
 `ifdef TT06_SKY130_RVE
-  for (i=TT06_SKY130_RVE_NR_X_REGS; i<32; i=i+1) begin
-    assign rdat[i] = 32'b0;
-  end
   for (i=1; i<TT06_SKY130_RVE_NR_X_REGS; i=i+1)
 `else
   for (i=1; i<32; i=i+1)
