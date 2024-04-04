@@ -72,11 +72,27 @@ assign rb_o   = rdat[rs2_i];
   assign we = {31'b0, we_i} << rd_i;
 `endif
 
+//
+// !WARNING 
+// > TT06_SKY130_RVE
+// > RVE has been added for tt06_sky130 here only.
+// > It will only be taken over as an RFTYPE variant
+// > once verification for RVE is implemented.
+//
+localparam TT06_SKY130_RVE_NR_X_REGS = 16;
 
 generate
   genvar i;
   assign rdat[0] = 32'b0;
-  for (i=1; i<32; i=i+1) begin
+`ifdef TT06_SKY130_RVE
+  for (i=TT06_SKY130_RVE_NR_X_REGS; i<32; i=i+1) begin
+    assign rdat[i] = 32'b0;
+  end
+  for (i=1; i<TT06_SKY130_RVE_NR_X_REGS; i=i+1)
+`else
+  for (i=1; i<32; i=i+1)
+`endif
+  begin
     logic [CHUNKSIZE-1:0] din;
     logic [CHUNKSIZE-1:0] dout;
     assign din      = we[i] ? res_i : dout;
