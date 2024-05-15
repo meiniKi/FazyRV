@@ -5,23 +5,30 @@
 A minimal-area RISC-V core with a scalable data path to 1, 2, 4, or 8 bits and manifold variants.
 
 ## Table of Content
-- [Introduction](#intro)
-- [Design Variants](#vars)
-- [Quick Start](#quick)
-    - [Reference SoC](#fsoc)
+- [FazyRV -- A Scalable RISC-V Core](#fazyrv----a-scalable-risc-v-core)
+  - [Table of Content](#table-of-content)
+  - [Introduction](#introduction)
+    - [Area / Resource Demand](#area--resource-demand)
+    - [Organization](#organization)
+    - [Acknowledgement](#acknowledgement)
+  - [Design Variants](#design-variants)
+  - [Quick Start](#quick-start)
+    - [Prepare the Environment](#prepare-the-environment)
+    - [Reference SoC](#reference-soc)
     - [Litex](#litex)
-- [Tests and Verification](#verif)
-    - [riscv-tests](#riscvtests)
-    - [RISCOF](#riscof)
-    - [Module-Level Formal Checks](#formal)
+  - [Tests and Verification](#tests-and-verification)
+    - [Run riscv-tests](#run-riscv-tests)
+    - [Run RISCOF](#run-riscof)
+    - [Module-Level Formal Checks](#module-level-formal-checks)
     - [riscv-formal](#riscv-formal)
-- [Benchmarks](#benchmarks)
+  - [Benchmarks](#benchmarks)
     - [Embench](#embench)
-- [Decoder](#decoder)
-- [Design Insights, Evaluation, and Results](#results)
-- [TODOs](#todos)
+  - [Decoder](#decoder)
+  - [Related Resources and Further Readings](#related-resources-and-further-readings)
+  - [TODOs](#todos)
+  - [Licensing](#licensing)
 
-## Introduction <a name="intro"></a>
+## Introduction
 
 FazyRV is a minimal-area RISC-V RV32 core with inherent scalability. The data path can be set to a width of either 1, 2, 4, or 8 bits to process smaller _chunks_ of the operands each clock cycle. Scaling the chunk size allows a trade-off between area and performance at synthesis time. Moreover, each chunk size can be combined with manifold variants to find the best-fitting configuration and trade-off for given system requirements and technology. In contrast to other approaches, FazyRV tries to avoid manual optimization at the gate level (see also [Decoder](#decoder)).
 
@@ -59,7 +66,7 @@ This repository includes results of research in the [Embedded Architectures & Sy
 
 &nbsp;
 
-## Design Variants <a name="vars"></a>
+## Design Variants
 
 `CHUNKSIZE` sets the data path width of FazyRV and, thus, primarily determines the required Cycles per Instruction (CPI). When the chunk size is set to 1, a single bit is processed per clock cycle, and an addition, e.g., requires 32 cycles (without fetch and decode) to process the operands. It reduces to 4 clock cycles when 8 bits are processed simultaneously, i.e., `CHUNKSIZE = 8`. The latter variant, however, comes with an increased area demand.
 
@@ -88,7 +95,7 @@ MEMDLY1     := 0 | 1
 > [!IMPORTANT]  
 > Please note that the core still needs to become production-ready. As there is a strong focus on area, the implemented features in the `INT` and `CSR` variants and allowed deviations from the specification must be carefully considered. Also, note that the `LOGIC` variant is explicitly not considered with `INT` and `CSR` variants. 
 
-## Quick Start <a name="quick"></a>
+## Quick Start
 
 ### Prepare the Environment
 
@@ -100,7 +107,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Reference SoC <a name="fsoc"></a>
+### Reference SoC
 
 fsoc (`soc/fsoc`) is a minimal SoC used to track the core's area demand and run simulation-based tests and benchmarks. The Make targets for the reference implementations are based fusesoc (for most FPGA architectures). `fazyrv.core` and `fsoc.core` core files for FazyRV and fsoc, respectively.
 
@@ -131,7 +138,7 @@ make _report.soc.ice40-8-MIN-BRAM
 make report.soc.all
 ```
 
-### Litex <a name="litex"></a>
+### Litex
 
 [LiteX](https://github.com/enjoy-digital/litex) supports FazyRV with the following options: `--cpu-chunksize` to set the chunk size (`1`, `2`, `4`, or `8`), `--cpu-conf` to set the configuration (`MIN`, `INT`, or `CSR`) and `--cpu-rftype` to set the register file type (`LOGIC`, `BRAM`, `BRAM_BP`, `BRAM_DP`, or `BRAM_DP_BP`).
 
@@ -139,9 +146,9 @@ make report.soc.all
 litex_sim --cpu-type=fazyrv --cpu-chunksize=4 --cpu-rftype=LOGIC
 ```
 
-## Tests and Verification <a name="verif"></a>
+## Tests and Verification
 
-### Run riscv-tests <a name="riscvtests"></a>
+### Run riscv-tests
 
 riscv-tests are used as fast checks to get feedback if a variant is broken. However, the tests are not as sensitive as the RISCOF tests and may report false positives.
 
@@ -157,7 +164,7 @@ make report.riscvtests.all
 ```
 
 
-### Run RISCOF <a name="riscof"></a>
+### Run RISCOF
 
 The RISCOF framework provides more extensive simulation-based design tests. You can run the test either for one variant or use `riscof.all` to run  the tests for a selected subset of all variants.
 
@@ -173,7 +180,7 @@ make riscof.prepare
 make riscof.all
 ```
 
-### Module-Level Formal Checks <a name="formal"></a>
+### Module-Level Formal Checks
 The ALU (`rtl/fazyrv_alu.sv`) and the `spm_d` module (`rtl/fazyrv_spm_d.sv`) are checked by BMC in a formal test bench. The test benches and `.sby` files are located in `fv/alu` and `fv/spm_d`, respectively. These were primarily used to support a formal verification test-driven development when the core was not ready to be checked by `riscv-formal`. However, they remain important to verify changes and optimizations. The chunk size is set to 8 by default. If required, please update the local parameter `parameter CHUNKSIZE` in the formal test benches accordingly.
 
 ```shell
@@ -188,7 +195,7 @@ sby -f fazyrv_spm_d_bmc.sby
 sby -f fazyrv_spm_d_cov.sby
 ```
 
-### riscv-formal <a name="riscv-formal"></a>
+### riscv-formal
 
 In addition to simulation-based tests, formal checks are applied using riscv-formal. Due to the exponential run time, formal checks are primarily considered for larger chunk sizes. Also, the depth is limited. 
 
@@ -211,9 +218,9 @@ make fv.rvformal.cov.insn.all
 make fv.rvformal.cov.reg.all
 ```
 
-## Benchmarks <a name="bench"></a>
+## Benchmarks
 
-### Embench <a name="embench"></a>
+### Embench
 
 Embench is used to benchmark FazyRV and compare it to similar minimal-area cores. It can be run via a Make target.
 
@@ -224,7 +231,7 @@ make embench.run
 The target calls the shell script `script/benchmark_run_embench_all.sh`. Please adapt it to run the benchmark suite on the desired variants. `--insn_timing` is used to store information about all executed instructions on the disk. It can be used to analyze and compare the cycles per instructions (CPI). Note that this significantly increases the required disk space.
 
 
-## Decoder <a name="decoder"></a>
+## Decoder
 
 FazyRV is written at a Verilog RTL abstraction level that remains human-readable. Thus, hand-optimization at the gate level is avoided whenever possible. However, some parts of the design benefit from optimization at a lower level, such as the combinational logic in the instruction decoder. Thus, the decoder is given in a table-like format that can be fed into the ESPRESSO logic optimizer to generate an optimized gate-level description. The input file (`optimizer/decoder/decoder`) can be edited efficiently. The instruction bits can either be checked explicitly or set to _don't care_ when they are not required to interpret legal instructions. The former has more freedom to optimize to a smaller implementation but is more insecure when illegal instructions appear.
 
@@ -241,12 +248,32 @@ cd optimizer/decoder/decode_opt
 python3 fuzz.py --espresso_file ../decoder --riscvtests_dir ../../../sim --riscvformal_dir ../../../ --template_verilog fazyrv_decode.template --template_marker "//<PUT_IT_HERE>" --destination_verilog ../../../rtl/fazyrv_decode.sv --espresso_optimized espresso.optimized
 ```
 
-## Design Insights, Evaluation, and Results <a name="results"></a>
+## Related Resources and Further Readings
+
+* [FazyRV-ExoTiny](https://github.com/meiniKi/FazyRV-ExoTiny) is a SoC built around FazyRV, focusing on minimizing the added area. It uses external QSPI instruction memory (flash) and external QSPI RAM.
+
+* [tt06-FazyRV-ExoTiny](https://github.com/meiniKi/tt06-FazyRV-ExoTiny) is a [TinyTypeout](https://tinytapeout.com/runs/tt06/462/) based on [FazyRV-ExoTiny](https://github.com/meiniKi/FazyRV-ExoTiny).
+
+* Do you want to see how powerful bit-serial cores are? Check out our [demonstrator](https://www.linkedin.com/posts/meinhard-kissich-43b19812a_think-bit-serial-risc-v-cores-lack-power-activity-7192074324109926400-ZOwL?utm_source=share&utm_medium=member_desktop) running a port of the Arduboy gaming framework.
+
+* YosysHQ invited us to contribute a blog post. Check out [our FazyRV community-spotlight blog post](https://blog.yosyshq.com/p/community-spotlight-fazyrv) and all the [amazing open-source projects](https://blog.yosyshq.com).
 
 > [!TIP]
-> This work will be presented at the Computing Frontiers 2024 conference. A research paper containing our design objectives, an insight into the design and trade-offs, a comparison with similar cores, and an in-depth evaluation will be **available soon**.
+> This work has been presented at the [21st ACM International Conference on Computing Frontiers (CF '24)](https://www.computingfrontiers.org/2024/program.html). A research paper containing our design objectives, an insight into the design and trade-offs, a comparison with similar cores, and an in-depth evaluation will be **published soon**. Please use the following citation template:
 
-## TODOs <a name="todos"></a>
+```
+@inproceedings{fazyrv2024kissich,
+  title = {{FazyRV: Closing the Gap between 32-Bit and Bit-Serial RISC-V Cores with a Scalable Implementation}},
+  booktitle = {Proc. of the 21st ACM International Conference on Computing Frontiers (CF ’24)},
+  author = {Kissich, Meinhard and Baunach, Marcel},
+  year = {2024},
+  month = {May},
+  note = {(Accepted/In Press)}
+}
+```
+
+
+## TODOs
 
 - [ ] Workflow: caching, tool versions, artifacts, dependence on some local tools
 - [ ] RVC extension (compressed instructions)
