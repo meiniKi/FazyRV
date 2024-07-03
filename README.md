@@ -250,16 +250,9 @@ python3 fuzz.py --espresso_file ../decoder --riscvtests_dir ../../../sim --riscv
 
 ## Related Resources and Further Readings
 
-* [FazyRV-ExoTiny](https://github.com/meiniKi/FazyRV-ExoTiny) is a SoC built around FazyRV, focusing on minimizing the added area. It uses external QSPI instruction memory (flash) and external QSPI RAM.
+* We presented this work at the 21st ACM International Conference on Computing Frontiers (CF '24). You can find the [paper here](https://dl.acm.org/doi/10.1145/3649153.3649195) (open access). It summarizes our design objectives, gives insight into the design and trade-offs, compares similar cores, and provides an in-depth evaluation.
 
-* [tt06-FazyRV-ExoTiny](https://github.com/meiniKi/tt06-FazyRV-ExoTiny) is a [TinyTypeout](https://tinytapeout.com/runs/tt06/462/) based on [FazyRV-ExoTiny](https://github.com/meiniKi/FazyRV-ExoTiny).
-
-* Do you want to see how powerful bit-serial cores are? Check out our [demonstrator](https://www.linkedin.com/posts/meinhard-kissich-43b19812a_think-bit-serial-risc-v-cores-lack-power-activity-7192074324109926400-ZOwL?utm_source=share&utm_medium=member_desktop) running a port of the Arduboy gaming framework.
-
-* YosysHQ invited us to contribute a blog post. Check out [our FazyRV community-spotlight blog post](https://blog.yosyshq.com/p/community-spotlight-fazyrv) and all the [amazing open-source projects](https://blog.yosyshq.com).
-
-> [!TIP]
-> This work has been presented at the [21st ACM International Conference on Computing Frontiers (CF '24)](https://www.computingfrontiers.org/2024/program.html). A research paper containing our design objectives, an insight into the design and trade-offs, a comparison with similar cores, and an in-depth evaluation will be **published soon**. Please use the following citation template:
+Please cite the work as follows:
 
 ```
 @inproceedings{fazyrv2024kissich,
@@ -268,9 +261,23 @@ python3 fuzz.py --espresso_file ../decoder --riscvtests_dir ../../../sim --riscv
   author = {Kissich, Meinhard and Baunach, Marcel},
   year = {2024},
   month = {May},
-  note = {(Accepted/In Press)}
+  publisher = {Association for Computing Machinery},
+  url = {https://doi.org/10.1145/3649153.3649195},
+  doi = {10.1145/3649153.3649195},
+  booktitle = {Proceedings of the 21st ACM International Conference on Computing Frontiers},
+  pages = {240–248}
 }
 ```
+
+* [FazyRV-ExoTiny](https://github.com/meiniKi/FazyRV-ExoTiny) is a SoC built around FazyRV, focusing on minimizing the added area. It uses external QSPI instruction memory (flash) and external QSPI RAM.
+
+* [tt06-FazyRV-ExoTiny](https://github.com/meiniKi/tt06-FazyRV-ExoTiny) is a [TinyTypeout](https://tinytapeout.com/runs/tt06/462/) based on [FazyRV-ExoTiny](https://github.com/meiniKi/FazyRV-ExoTiny).
+
+* Do you want to see how powerful bit-serial cores are? Check out our [demonstrator](https://www.linkedin.com/posts/meinhard-kissich-43b19812a_think-bit-serial-risc-v-cores-lack-power-activity-7192074324109926400-ZOwL?utm_source=share&utm_medium=member_desktop) running a port of the Arduboy gaming framework.
+
+* YosysHQ invited us to contribute a blog post. Check out [our FazyRV community-spotlight blog post](https://blog.yosyshq.com/p/community-spotlight-fazyrv) and all the [amazing open-source projects](https://blog.yosyshq.com).
+
+
 
 
 ## TODOs
