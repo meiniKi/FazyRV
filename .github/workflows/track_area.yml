@@ -39,7 +39,7 @@ jobs:
         run: make track.sizes.synth COMMIT=$(git rev-parse --short "$GITHUB_SHA")
 
       - name: Plot artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: area_plot
           path: './doc/area*'
@@ -54,7 +54,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4.1.7
 
       - name: Copy to docs
         run: |
