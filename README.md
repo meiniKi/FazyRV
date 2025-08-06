@@ -4,6 +4,9 @@
 
 A minimal-area RISC-V core with a scalable data path to 1, 2, 4, or 8 bits and manifold variants.
 
+> [!CAUTION]
+> Modified FazyRV to add a chunked custom instruction interface as part of the HeiChips 2025 hackathon. _Not_ verified. Use with care.
+
 ## Table of Content
 - [FazyRV -- A Scalable RISC-V Core](#fazyrv----a-scalable-risc-v-core)
   - [Table of Content](#table-of-content)

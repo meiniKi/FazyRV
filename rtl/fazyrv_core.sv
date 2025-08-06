@@ -104,7 +104,15 @@ module fazyrv_core #(
   output logic                  rf_mret_o,
   output logic [1:0]            rf_mcause30_o,
   output logic                  rf_mcause_int_o,
-  input  logic                  rf_mtie_i
+  input  logic                  rf_mtie_i,
+
+  output logic [CHUNKSIZE-1:0]  ccx_rs_a_o,
+  output logic [CHUNKSIZE-1:0]  ccx_rs_b_o,
+  input  logic [CHUNKSIZE-1:0]  ccx_res_i,
+  output logic [1:0]            ccx_sel_o,
+  output logic                  ccx_req_o,  // heichips_todo
+  input  logic                  ccx_resp_i  // heichips_todo
+
 `ifdef RISCV_FORMAL
   , `RVFI_OUTPUTS
 `endif
@@ -140,11 +148,13 @@ logic id_instr_slt;
 logic id_instr_shft;
 logic id_instr_left;
 logic id_instr_csr;
+logic id_instr_ccx;
 logic id_csr_hpmtc;
 logic id_csr_6;
 logic id_csr_high;
 logic id_mret;
 
+logic [1:0] id_ccx_sel;
 logic [1:0] id_mcause30;
 
 logic id_except;
@@ -156,6 +166,7 @@ logic [$clog2(REG_WIDTH/CHUNKSIZE)-1:0] cntrl_icyc;
 logic hlt_spm_a;
 logic hlt_regs;
 logic hlt_imm;
+logic hlt_res;
 
 logic shft_done;
 
@@ -211,6 +222,8 @@ logic trap_entry_r;
 logic trap_pending_r;
 logic mcause_30;
 
+assign ccx_sel_o = id_ccx_sel;
+assign hlt_res = id_instr_ccx & ~ccx_resp_i; // heichips_todo
 
 assign br_and_taken = (id_instr_any_br & ex_cmp);
 
@@ -334,7 +347,8 @@ fazyrv_cntrl #(
 
   .hlt_regs_o       ( hlt_regs          ),
   .hlt_spm_a_o      ( hlt_spm_a         ),
-  .hlt_imm_o        ( hlt_imm           )
+  .hlt_imm_o        ( hlt_imm           ),
+  .hlt_res_i        ( hlt_res           )
 );
 
 //  88  88888888888               d8     88  88b           d88  88888888888  88b           d88
@@ -433,6 +447,8 @@ generate
       .instr_jmp_o        ( id_instr_jmp      ),
       .instr_slt_o        ( id_instr_slt      ),
       .instr_csr_o        ( id_instr_csr      ),
+      .ccx_o              ( id_instr_ccx      ),
+      .ccx_sel_o          ( id_ccx_sel        ),
 
       .csr_hpmtc_o        ( id_csr_hpmtc      ),
       .csr_6_o            ( id_csr_6          ),
@@ -493,6 +509,8 @@ generate
       .instr_jmp_o        ( id_instr_jmp      ),
       .instr_slt_o        ( id_instr_slt      ),
       .instr_csr_o        ( id_instr_csr      ),
+      .ccx_o              ( id_instr_ccx      ),
+      .ccx_sel_o          ( id_ccx_sel        ),
 
       .csr_hpmtc_o        ( id_csr_hpmtc      ),
       .csr_6_o            ( id_csr_6          ),
@@ -682,6 +700,12 @@ end else begin
 end
 endgenerate
 
+logic [CHUNKSIZE-1:0] ex_res_ccx;
+logic [CHUNKSIZE-1:0] ex_res_alu;
+
+assign ex_res_ccx = ccx_res_i;
+assign ex_res = id_instr_ccx ? ex_res_ccx : ex_res_alu;
+
 assign ex_ra_mxd =  id_aux_rs_a_pc   ?  pc_ser      : rf_ra;
 assign ex_rb_mxd =  id_aux_rs_b_imm  ?  id_imm      :
                     id_aux_b_spm_d   ?  spm_d_dout  :
@@ -691,6 +715,12 @@ assign ex_ra  = (id_alu_aux_rev ^ csr_swap_high) ? ex_rb_mxd : ex_ra_mxd;
 assign ex_rb  = (id_alu_aux_rev ^ csr_swap_high) ? ex_ra_mxd : ex_rb_mxd;
 assign ex_cmp = ex_cmp_tmp ^ id_alu_cmp_inv;
 
+assign ccx_rs_a_o = ex_ra; 
+assign ccx_rs_b_o = ex_rb;
+assign ccx_req_o  = cntrl_lsb;
+
+assign ccx_res_i
+
 fazyrv_alu #( .CHUNKSIZE(CHUNKSIZE) ) i_fazyrv_alu
 (
   .clk_i        ( clk_i           ),
@@ -699,7 +729,7 @@ fazyrv_alu #( .CHUNKSIZE(CHUNKSIZE) ) i_fazyrv_alu
 
   .rs_a_i       ( ex_ra           ),
   .rs_b_i       ( ex_rb           ),
-  .res_o        ( ex_res          ),
+  .res_o        ( ex_res_alu      ),
   .cmp_o        ( ex_cmp_tmp      ),
 
   .sel_arith_i  ( id_alu_arith    ),

@@ -72,7 +72,15 @@ module fazyrv_top #(
   output logic [3:0]  wb_dmem_be_o,
   input  logic [31:0] wb_dmem_dat_i,
   output logic [31:0] wb_dmem_adr_o,
-  output logic [31:0] wb_dmem_dat_o
+  output logic [31:0] wb_dmem_dat_o,
+
+  output logic [CHUNKSIZE-1:0]  ccx_rs_a_o,
+  output logic [CHUNKSIZE-1:0]  ccx_rs_b_o,
+  input  logic [CHUNKSIZE-1:0]  ccx_res_i,
+  output logic [1:0]            ccx_sel_o,
+  output logic                  ccx_req_o,
+  input  logic                  ccx_resp_i
+
 `ifdef RISCV_FORMAL
   , `RVFI_OUTPUTS
 `endif
@@ -152,7 +160,15 @@ fazyrv_core #(
   .rf_mret_o        ( rf_mret           ),
   .rf_mcause30_o    ( rf_mcause30       ),
   .rf_mcause_int_o  ( rf_mcause_int     ),
-  .rf_mtie_i        ( rf_mtie           )
+  .rf_mtie_i        ( rf_mtie           ),
+
+  .ccx_rs_a_o       ( ccx_rs_a_o        ),
+  .ccx_rs_b_o       ( ccx_rs_b_o        ),
+  .ccx_res_i        ( ccx_res_i         ),
+  .ccx_sel_o        ( ccx_sel_o         ),
+  .ccx_req_o        ( ccx_req_o         ),
+  .ccx_resp_i       ( ccx_resp_i        )
+
 `ifdef RISCV_FORMAL
   , `RVFI_CONN,
 `endif

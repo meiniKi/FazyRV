@@ -99,6 +99,7 @@ module fazyrv_cntrl #(
   output logic hlt_regs_o,
   output logic hlt_spm_a_o,
   output logic hlt_imm_o,
+  input  logic hlt_res_i,
 
   output logic [$clog2(CPI)-1:0] icyc_o
 );
@@ -228,6 +229,11 @@ always_comb begin
     // ---
     ICYC1: begin
       hlt_imm_o = any_br_i;
+
+      // heichips_todo check if this breaks something!
+      if (hlt_res_i) begin
+        cyc_n = cyc_r;
+      end
 
       if (icyc_done) begin
         msb_o   = 1'b1;
