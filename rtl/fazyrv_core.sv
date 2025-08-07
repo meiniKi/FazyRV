@@ -110,8 +110,8 @@ module fazyrv_core #(
   output logic [CHUNKSIZE-1:0]  ccx_rs_b_o,
   input  logic [CHUNKSIZE-1:0]  ccx_res_i,
   output logic [1:0]            ccx_sel_o,
-  output logic                  ccx_req_o,  // heichips_todo
-  input  logic                  ccx_resp_i  // heichips_todo
+  output logic                  ccx_req_o,
+  input  logic                  ccx_resp_i
 
 `ifdef RISCV_FORMAL
   , `RVFI_OUTPUTS
@@ -718,8 +718,6 @@ assign ex_cmp = ex_cmp_tmp ^ id_alu_cmp_inv;
 assign ccx_rs_a_o = ex_ra; 
 assign ccx_rs_b_o = ex_rb;
 assign ccx_req_o  = cntrl_lsb;
-
-assign ccx_res_i
 
 fazyrv_alu #( .CHUNKSIZE(CHUNKSIZE) ) i_fazyrv_alu
 (

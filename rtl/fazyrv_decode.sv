@@ -124,6 +124,7 @@ module fazyrv_decode #(
   output logic              instr_jmp_o,
   output logic              instr_slt_o,
   output logic              instr_csr_o,
+
   output logic              ccx_o,
   output logic [1:0]        ccx_sel_o,
 
@@ -167,7 +168,8 @@ assign rs1_o = rs1_r;
 assign rs2_o = rs2_r;
 assign rd_o  = rd_r;
 
-assign ccx_sel_o = instr_i[13:12];
+assign ccx_sel_o = i_r[13:12];
+
 
 // --- imm decoding ---
 
@@ -289,209 +291,132 @@ generate
     end
   end else begin
 
-    assign is_b_imm = (!trap_entry_i&!i_r[14]&i_r[13]&i_r[6]&!i_r[4]&!i_r[2]) | (
-        !trap_entry_i&!i_r[6]&i_r[5]&i_r[4]&!i_r[2]) | (!trap_entry_i&i_r[14]
-        &i_r[6]&i_r[4]) | (!trap_entry_i&!i_r[6]&i_r[5]&!i_r[4]) | (
-        !trap_entry_i&!i_r[5]&!i_r[2]) | (i_r[2]) | (i_r[3]);
+    assign is_b_imm = (!instr_i[13]&instr_i[6]&instr_i[5]&!instr_i[4]&
+        !instr_i[3]&!instr_i[2]&instr_i[1]&instr_i[0]) | (
+        instr_i[14]&instr_i[6]&instr_i[5]&!instr_i[4]&!instr_i[3]
+        &!instr_i[2]&instr_i[1]&instr_i[0]);
 
-    assign is_s_imm = (i_r[13]&i_r[12]) | (!trap_entry_i&!i_r[6]&i_r[5]&i_r[4]
-        &!i_r[2]) | (i_r[14]&!i_r[2]) | (!trap_entry_i&!i_r[5]&!i_r[2]) | (
-        !trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (i_r[2]) | (i_r[3]);
+    assign is_s_imm = (!instr_i[14]&!instr_i[12]&!instr_i[6]&instr_i[5]&
+        !instr_i[4]&!instr_i[3]&!instr_i[2]
+        &instr_i[1]&instr_i[0]) | (!instr_i[14]&!instr_i[13]&!instr_i[6]&
+        instr_i[5]&!instr_i[4]&!instr_i[3]
+        &!instr_i[2]&instr_i[1]&instr_i[0]);
 
-    assign is_i_imm = (!trap_entry_i&i_r[14]&i_r[13]&!i_r[5]&!i_r[4]) | (
-        !trap_entry_i&i_r[13]&i_r[12]&!i_r[6]&!i_r[4]) | (!trap_entry_i
-        &i_r[4]&i_r[2]) | (!trap_entry_i&!i_r[6]&i_r[5]&i_r[4]&!i_r[2]) | (
-        !trap_entry_i&i_r[14]&i_r[6]&i_r[4]) | (!trap_entry_i&!i_r[6]&!i_r[4]
-        &i_r[2]) | (!trap_entry_i&i_r[6]&!i_r[5]&!i_r[3]) | (!trap_entry_i
-        &!i_r[6]&i_r[5]&!i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (
-        i_r[3]);
+    assign is_i_imm = (!instr_i[31]&!instr_i[30]&!instr_i[29]&!instr_i[28]&
+    !instr_i[27]&!instr_i[26]&!instr_i[25]&!instr_i[6]&!instr_i[5]&instr_i[4
+    ]&!instr_i[3]&!instr_i[2]&instr_i[1]&instr_i[0]) | (!instr_i[31]
+        &!instr_i[29]&!instr_i[28]&!instr_i[27]&!instr_i[26]&!instr_i[25]&
+        instr_i[14]&!instr_i[6]&!instr_i[5]
+        &instr_i[4]&!instr_i[3]&!instr_i[2]&instr_i[1]&instr_i[0]) |
+        (!instr_i[12]&!instr_i[6]&!instr_i[5]
+        &instr_i[4]&!instr_i[3]&!instr_i[2]&instr_i[1]&instr_i[0]) |
+        (!instr_i[14]&!instr_i[13]&!instr_i[12]
+        &instr_i[6]&instr_i[5]&!instr_i[4]&!instr_i[3]&instr_i[2]&
+        instr_i[1]&instr_i[0]) | (!instr_i[14]
+        &!instr_i[12]&!instr_i[6]&!instr_i[5]&!instr_i[3]&!instr_i[2]&
+        instr_i[1]&instr_i[0]) | (!instr_i[13]
+        &!instr_i[6]&!instr_i[5]&!instr_i[4]&!instr_i[3]&!instr_i[2]&
+        instr_i[1]&instr_i[0]) | (instr_i[13]
+        &!instr_i[6]&!instr_i[5]&instr_i[4]&!instr_i[3]&!instr_i[2]&
+        instr_i[1]&instr_i[0]);
 
-    assign is_j_imm = (!trap_entry_i&i_r[4]&i_r[2]) | (!trap_entry_i&!i_r[6]&i_r[3]) | (
-        !i_r[3]) | (!trap_entry_i&!i_r[5]&i_r[3]&i_r[2]) | (!trap_entry_i
-        &i_r[3]&!i_r[2]);
+    assign is_j_imm = (instr_i[6]&instr_i[5]&!instr_i[4]&instr_i[3]&
+    instr_i[2]&instr_i[1]&instr_i[0]);
 
-    assign is_u_imm = (!i_r[4]&i_r[2]&in_cycle_2) | (!trap_entry_i&i_r[6]&i_r[4]
-        &i_r[2]) | (!trap_entry_i&!i_r[6]&i_r[5]&i_r[4]&!i_r[2]) | (
-        !trap_entry_i&!i_r[4]&!i_r[3]&!in_cycle_2) | (!i_r[6]&!i_r[4]
-        &in_cycle_2) | (i_r[14]&!i_r[2]) | (!trap_entry_i&!i_r[5]&!i_r[2]) | (
-        !trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (i_r[3]);
+    assign is_u_imm = (!instr_i[6]&instr_i[4]&!instr_i[3]&instr_i[2]&
+    instr_i[1]&instr_i[0]);
 end
 endgenerate
 
-assign alu_aux_b_spm_d_o = (!i_r[13]&i_r[12]&i_r[4]&!i_r[2]&!in_cycle_2) | (
-    !trap_entry_i&i_r[14]&i_r[13]&!i_r[5]&!i_r[4]) | (!trap_entry_i
-    &i_r[13]&i_r[12]&!i_r[6]&!i_r[4]) | (!trap_entry_i&i_r[13]&!i_r[6]
-    &i_r[4]&!i_r[2]) | (!i_r[12]&i_r[4]) | (!trap_entry_i&!i_r[4]&!i_r[3]
-    &!in_cycle_2) | (!trap_entry_i&i_r[12]&i_r[6]&i_r[4]) | (
-    !trap_entry_i&!i_r[6]&i_r[5]&!i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[4]
-    &!i_r[2]) | (i_r[2]) | (i_r[3]);
+assign alu_aux_b_spm_d_o = (!i_r[14]&!i_r[12]&!i_r[6]&!i_r[5]&!i_r[4]&!i_r[3]
+    &!i_r[2]&in_cycle_2) | (!i_r[13]&i_r[12]&!i_r[6]&i_r[4]&!i_r[3]
+    &!i_r[2]&in_cycle_2) | (!i_r[13]&!i_r[6]&!i_r[5]&!i_r[4]&!i_r[3]
+    &!i_r[2]&in_cycle_2);
 
-assign alu_aux_rs_b_imm_o = (i_r[6]&!i_r[4]&!i_r[2]&!in_cycle_2) | (
-    !trap_entry_i&i_r[14]&!i_r[6]&i_r[5]&!i_r[4]) | (!i_r[13]&i_r[12]
-    &i_r[4]&!i_r[2]&in_cycle_2) | (!trap_entry_i&!i_r[14]&i_r[13]&i_r[6]
-    &!i_r[4]&!i_r[2]) | (!trap_entry_i&i_r[14]&i_r[13]&!i_r[5]&!i_r[4]) | (
-    !trap_entry_i&i_r[6]&i_r[4]&i_r[2]) | (!trap_entry_i&i_r[13]&i_r[12]
-    &!i_r[6]&!i_r[4]) | (!trap_entry_i&!i_r[6]&i_r[3]) | (!trap_entry_i
-    &!i_r[5]&i_r[3]&i_r[2]) | (!trap_entry_i&!i_r[6]&i_r[5]&i_r[4]&!i_r[2]) | (
-    !i_r[6]&!i_r[4]&in_cycle_2) | (!trap_entry_i&i_r[14]&i_r[6]&i_r[4]) | (
-    !trap_entry_i&!i_r[6]&!i_r[4]&i_r[2]) | (!trap_entry_i&i_r[3]&!i_r[2]) | (
-    !trap_entry_i&i_r[12]&i_r[6]&i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[5]
-    &!i_r[3]) | (!trap_entry_i&i_r[13]&i_r[6]&i_r[4]);
+assign alu_aux_rs_b_imm_o = (!i_r[13]&!i_r[6]&!i_r[5]&!i_r[3]&!i_r[2]&!in_cycle_2) | (
+    i_r[14]&i_r[6]&i_r[5]&!i_r[4]&!i_r[3]&in_cycle_2) | (!i_r[14]&!i_r[13]
+    &!i_r[12]&i_r[6]&i_r[5]&i_r[4]&!i_r[3]&!i_r[2]) | (!i_r[13]&i_r[6]
+    &i_r[5]&!i_r[4]&!i_r[3]&in_cycle_2) | (i_r[6]&i_r[5]&!i_r[4]&i_r[2]) | (
+    !i_r[14]&!i_r[12]&!i_r[6]&!i_r[4]&!i_r[3]&!i_r[2]&!in_cycle_2) | (
+    !i_r[14]&!i_r[13]&!i_r[6]&!i_r[4]&!i_r[3]&!i_r[2]&!in_cycle_2) | (
+    i_r[13]&!i_r[6]&!i_r[5]&i_r[4]&!i_r[3]) | (!i_r[12]&!i_r[6]&!i_r[5]
+    &i_r[4]&!i_r[3]) | (!i_r[6]&i_r[4]&!i_r[3]&i_r[2]);
 
-assign alu_aux_rs_a_pc_o = (!trap_entry_i&!i_r[13]&!i_r[12]&i_r[6]&i_r[4]&!i_r[3]) | (
-    !trap_entry_i&!i_r[14]&i_r[13]&i_r[6]&!i_r[4]&!i_r[2]) | (
-    !trap_entry_i&i_r[5]&i_r[4]&i_r[2]) | (!trap_entry_i&!i_r[5]&i_r[3]
-    &i_r[2]) | (!trap_entry_i&!i_r[6]&i_r[5]&i_r[4]&!i_r[2]) | (
-    !trap_entry_i&!i_r[4]&!i_r[3]&!in_cycle_2) | (!trap_entry_i&!i_r[6]
-    &!i_r[4]&i_r[2]) | (!trap_entry_i&i_r[3]&!i_r[2]) | (!trap_entry_i
-    &i_r[12]&i_r[6]&i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[5]&!i_r[3]) | (
-    !trap_entry_i&!i_r[6]&i_r[5]&!i_r[4]) | (!trap_entry_i&!i_r[5]&!i_r[2]) | (
-    !trap_entry_i&i_r[13]&i_r[6]&i_r[4]);
+assign alu_aux_rs_a_pc_o = (!i_r[13]&i_r[6]&i_r[5]&!i_r[4]&!i_r[3]&in_cycle_2) | (
+    i_r[14]&i_r[6]&i_r[5]&!i_r[4]&!i_r[3]&in_cycle_2) | (!i_r[6]&i_r[4]
+    &!i_r[3]&i_r[2]) | (i_r[6]&i_r[5]&!i_r[4]&i_r[3]&i_r[2]) | (i_r[6]
+    &i_r[5]&!i_r[4]&i_r[2]&in_cycle_2) | (trap_entry_i);
 
-assign alu_aux_rev_o = (!trap_entry_i&!i_r[2]&in_cycle_2) | (!trap_entry_i
-    &i_r[13]&!i_r[6]&i_r[4]&!i_r[2]) | (!trap_entry_i&!i_r[13]&!i_r[12]
-    &!i_r[2]) | (!trap_entry_i&i_r[4]&i_r[2]) | (!trap_entry_i&!i_r[5]
-    &i_r[3]&i_r[2]) | (!trap_entry_i&!i_r[4]&!i_r[3]&!in_cycle_2) | (
-    !trap_entry_i&i_r[14]&i_r[6]&i_r[4]) | (!trap_entry_i&!i_r[6]&!i_r[4]
-    &i_r[2]) | (!trap_entry_i&i_r[3]&!i_r[2]) | (!trap_entry_i&i_r[6]
-    &!i_r[5]&!i_r[3]);
+assign alu_aux_rev_o = (!i_r[13]&i_r[12]&!i_r[6]&i_r[4]&!i_r[3]&!i_r[2]
+    &!in_cycle_2) | (i_r[6]&i_r[5]&!i_r[4]&i_r[2]) | (!i_r[14]&i_r[6]
+    &i_r[5]&i_r[4]&!i_r[3]&!i_r[2]&!in_cycle_2) | (trap_entry_i);
 
-assign alu_cmp_inv_o = (!trap_entry_i&!i_r[14]&i_r[13]&i_r[6]&!i_r[4]&!i_r[2]) | (
-    i_r[13]&!i_r[12]&!i_r[4]) | (!trap_entry_i&i_r[13]&!i_r[6]&i_r[4]
-    &!i_r[2]) | (!trap_entry_i&!i_r[13]&!i_r[12]&!i_r[2]) | (
-    !trap_entry_i&i_r[14]&i_r[6]&i_r[4]) | (!trap_entry_i&!i_r[6]&i_r[5]
-    &!i_r[4]) | (!trap_entry_i&!i_r[5]&!i_r[2]) | (i_r[2]) | (i_r[3]);
+assign alu_cmp_inv_o = (!i_r[14]&!i_r[13]&i_r[12]&i_r[5]&!i_r[3]&!i_r[2]) | (
+    i_r[14]&i_r[12]&i_r[6]&i_r[5]&!i_r[4]&!i_r[3]);
 
-assign alu_cmp_eq_o = (!trap_entry_i&!i_r[14]&i_r[13]&i_r[6]&!i_r[4]&!i_r[2]) | (
-    !trap_entry_i&i_r[13]&!i_r[6]&i_r[4]&!i_r[2]) | (i_r[13]&i_r[12]) | (
-    i_r[14]&!i_r[2]) | (!trap_entry_i&!i_r[5]&!i_r[2]) | (i_r[2]) | (
-    i_r[3]);
+assign alu_cmp_eq_o = (!i_r[14]&!i_r[13]&i_r[5]&!i_r[3]&!i_r[2]);
 
-assign alu_cmp_sign_o = (i_r[13]&!i_r[12]&!i_r[4]) | (i_r[13]&i_r[12]) | (
-    !trap_entry_i&i_r[14]&i_r[6]&i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[5]
-    &!i_r[3]) | (!trap_entry_i&!i_r[6]&i_r[5]&!i_r[4]) | (i_r[2]) | (
-    i_r[3]);
+assign alu_cmp_sign_o = (!i_r[12]&!i_r[6]&i_r[4]&!i_r[3]) | (!i_r[13]&i_r[6]
+    &i_r[5]&!i_r[4]&!i_r[3]);
 
-assign alu_and_o = (!trap_entry_i&i_r[14]&!i_r[12]&i_r[4]&!i_r[2]) | (
-    !trap_entry_i&!i_r[13]&!i_r[12]&i_r[6]&i_r[4]&!i_r[3]) | (
-    !trap_entry_i&!i_r[4]&!i_r[3]&!in_cycle_2) | (!i_r[6]&!i_r[4]
-    &in_cycle_2) | (!trap_entry_i&i_r[12]&i_r[6]&i_r[4]) | (!trap_entry_i
-    &i_r[13]&i_r[6]&i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (
-    trap_entry_i) | (i_r[2]) | (i_r[3]);
+assign alu_and_o = (!trap_entry_i&i_r[12]&!i_r[6]&i_r[4]&!i_r[3]);
 
-assign alu_xor_o = (!trap_entry_i&!i_r[13]&!i_r[12]&i_r[6]&i_r[4]&!i_r[3]) | (
-    !trap_entry_i&i_r[13]&!i_r[6]&i_r[4]&!i_r[2]) | (!trap_entry_i&!i_r[4]
-    &!i_r[3]&!in_cycle_2) | (!i_r[6]&!i_r[4]&in_cycle_2) | (!trap_entry_i
-    &i_r[12]&i_r[6]&i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[5]&!i_r[3]) | (
-    !trap_entry_i&i_r[13]&i_r[6]&i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[4]
-    &!i_r[2]) | (trap_entry_i) | (i_r[3]);
+assign alu_xor_o = (!trap_entry_i&!i_r[13]&!i_r[6]&i_r[4]&!i_r[3]);
 
-assign alu_sub_o = (!trap_entry_i&!i_r[13]&!i_r[12]&i_r[6]&i_r[4]&!i_r[3]) | (
-    !i_r[13]&i_r[12]&i_r[4]&!i_r[2]&!in_cycle_2) | (!i_r[13]&i_r[12]
-    &i_r[4]&!i_r[2]&in_cycle_2) | (!i_r[30]) | (!trap_entry_i&!i_r[6]
-    &i_r[5]&!i_r[4]) | (!trap_entry_i&!i_r[5]&!i_r[2]) | (!trap_entry_i
-    &i_r[13]&i_r[6]&i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (
-    trap_entry_i) | (i_r[2]) | (i_r[3]);
+assign alu_sub_o = (!trap_entry_i&i_r[30]&!i_r[12]&!i_r[6]&i_r[5]&i_r[4]&!i_r[3]
+    &!i_r[2]);
 
-assign alu_en_a_o = (!trap_entry_i&i_r[14]&!i_r[6]&i_r[5]&!i_r[4]) | (!i_r[13]
-    &i_r[12]&i_r[4]&!i_r[2]&!in_cycle_2) | (!i_r[13]&i_r[12]&i_r[4]
-    &!i_r[2]&in_cycle_2) | (!trap_entry_i&!i_r[14]&i_r[13]&i_r[6]&!i_r[4]
-    &!i_r[2]) | (!trap_entry_i&i_r[5]&i_r[4]&i_r[2]) | (!i_r[4]&i_r[2]
-    &in_cycle_2) | (!trap_entry_i&i_r[14]&i_r[13]&!i_r[5]&!i_r[4]) | (
-    !trap_entry_i&i_r[13]&i_r[12]&!i_r[6]&!i_r[4]) | (!trap_entry_i
-    &!i_r[5]&i_r[3]&i_r[2]) | (!i_r[6]&!i_r[4]&in_cycle_2) | (
-    !trap_entry_i&i_r[14]&i_r[6]&i_r[4]) | (!trap_entry_i&!i_r[6]&!i_r[4]
-    &i_r[2]) | (!trap_entry_i&i_r[3]&!i_r[2]) | (!trap_entry_i&i_r[6]
-    &!i_r[5]&!i_r[3]) | (!trap_entry_i&i_r[13]&i_r[6]&i_r[4]) | (
-    trap_entry_i);
+assign alu_en_a_o = (!trap_entry_i&!i_r[14]&!i_r[13]&i_r[5]&!i_r[4]&!i_r[3]
+    &!i_r[2]&!in_cycle_2) | (!trap_entry_i&!i_r[14]&!i_r[13]&!i_r[12]
+    &i_r[5]&i_r[4]&!i_r[3]&!i_r[2]) | (!trap_entry_i&i_r[14]&i_r[6]
+    &i_r[5]&!i_r[4]&!i_r[3]&!i_r[2]) | (!trap_entry_i&!i_r[13]&i_r[6]
+    &i_r[5]&!i_r[4]&!i_r[3]&!i_r[2]) | (!trap_entry_i&!i_r[13]&!i_r[6]
+    &!i_r[5]&!i_r[4]&!i_r[3]&!i_r[2]&!in_cycle_2) | (!trap_entry_i&i_r[6]
+    &i_r[5]&!i_r[4]&i_r[2]&!in_cycle_2) | (!trap_entry_i&!i_r[14]&!i_r[12]
+    &!i_r[6]&!i_r[3]&!i_r[2]&!in_cycle_2) | (!trap_entry_i&i_r[13]&!i_r[6]
+    &i_r[4]&!i_r[3]&!i_r[2]) | (!trap_entry_i&!i_r[12]&!i_r[6]&i_r[4]
+    &!i_r[3]&!i_r[2]) | (!trap_entry_i&!i_r[6]&!i_r[5]&i_r[4]&!i_r[3]
+    &i_r[2]);
 
-assign alu_arith_o = (!trap_entry_i&i_r[14]&!i_r[12]&i_r[4]&!i_r[2]) | (
-    !trap_entry_i&i_r[14]&!i_r[6]&i_r[5]&!i_r[4]) | (!trap_entry_i
-    &!i_r[14]&i_r[13]&i_r[6]&!i_r[4]&!i_r[2]) | (!trap_entry_i&i_r[14]
-    &i_r[13]&!i_r[5]&!i_r[4]) | (!trap_entry_i&i_r[6]&i_r[4]&i_r[2]) | (
-    !trap_entry_i&i_r[13]&i_r[12]&!i_r[6]&!i_r[4]) | (!trap_entry_i
-    &i_r[13]&!i_r[6]&i_r[4]&!i_r[2]) | (!trap_entry_i&!i_r[6]&i_r[3]) | (
-    !trap_entry_i&!i_r[5]&i_r[3]&i_r[2]) | (!trap_entry_i&i_r[14]&i_r[6]
-    &i_r[4]) | (!trap_entry_i&!i_r[6]&!i_r[4]&i_r[2]) | (!trap_entry_i
-    &i_r[3]&!i_r[2]) | (!trap_entry_i&i_r[6]&!i_r[5]&!i_r[3]);
+assign alu_arith_o = (!i_r[14]&!i_r[13]&i_r[5]&!i_r[3]&!i_r[2]) | (!i_r[13]
+    &i_r[12]&!i_r[6]&i_r[4]&!i_r[3]) | (i_r[14]&i_r[6]&i_r[5]&!i_r[4]
+    &!i_r[3]) | (!i_r[14]&i_r[5]&i_r[4]&!i_r[3]&!i_r[2]) | (!i_r[14]
+    &!i_r[12]&!i_r[6]&!i_r[3]&!i_r[2]) | (i_r[6]&i_r[5]&!i_r[4]&i_r[2]) | (
+    !i_r[13]&!i_r[6]&!i_r[5]&!i_r[4]&!i_r[3]&!i_r[2]) | (!i_r[6]&i_r[4]
+    &!i_r[3]&i_r[2]) | (trap_entry_i);
 
-assign instr_jmp_o = (!trap_entry_i&!i_r[13]&!i_r[12]&!i_r[2]) | (!trap_entry_i
-    &i_r[4]&i_r[2]) | (!trap_entry_i&!i_r[5]&i_r[3]&i_r[2]) | (
-    !trap_entry_i&!i_r[6]&i_r[5]&i_r[4]&!i_r[2]) | (!trap_entry_i&!i_r[6]
-    &!i_r[4]&i_r[2]) | (!trap_entry_i&i_r[12]&i_r[6]&i_r[4]) | (
-    !trap_entry_i&i_r[6]&!i_r[5]&!i_r[3]) | (!trap_entry_i&!i_r[6]&i_r[5]
-    &!i_r[4]) | (!trap_entry_i&!i_r[5]&!i_r[2]) | (!trap_entry_i&i_r[13]
-    &i_r[6]&i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (
-    trap_entry_i);
+assign instr_jmp_o = (!trap_entry_i&i_r[6]&i_r[5]&!i_r[4]&i_r[2]);
 
-assign instr_any_br_o = (!trap_entry_i&!i_r[13]&!i_r[12]&i_r[6]&i_r[4]&!i_r[3]) | (
-    !trap_entry_i&!i_r[14]&i_r[13]&i_r[6]&!i_r[4]&!i_r[2]) | (
-    !trap_entry_i&!i_r[6]&i_r[5]&i_r[4]&!i_r[2]) | (!trap_entry_i&i_r[12]
-    &i_r[6]&i_r[4]) | (!trap_entry_i&!i_r[6]&i_r[5]&!i_r[4]) | (
-    !trap_entry_i&!i_r[5]&!i_r[2]) | (!trap_entry_i&i_r[13]&i_r[6]&i_r[4]) | (
-    trap_entry_i) | (i_r[2]) | (i_r[3]);
+assign instr_any_br_o = (!trap_entry_i&!i_r[13]&i_r[6]&i_r[5]&!i_r[4]&!i_r[3]
+    &!i_r[2]) | (!trap_entry_i&i_r[14]&i_r[6]&i_r[5]&!i_r[4]&!i_r[3]
+    &!i_r[2]);
 
-assign alu_aux_use_cmp_o = (!i_r[13]&i_r[12]&i_r[4]&!i_r[2]&!in_cycle_2) | (
-    !i_r[13]&i_r[12]&i_r[4]&!i_r[2]&in_cycle_2) | (!trap_entry_i&!i_r[13]
-    &!i_r[12]&!i_r[2]) | (!trap_entry_i&!i_r[4]&!i_r[3]&!in_cycle_2) | (
-    !i_r[6]&!i_r[4]&in_cycle_2) | (i_r[14]&!i_r[2]) | (!trap_entry_i
-    &i_r[13]&i_r[6]&i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (
-    trap_entry_i) | (i_r[2]) | (i_r[3]);
+assign alu_aux_use_cmp_o = (!trap_entry_i&!i_r[14]&i_r[13]&!i_r[6]&i_r[4]&!i_r[3]
+    &!i_r[2]);
 
-assign instr_left_o = (!trap_entry_i&!i_r[13]&!i_r[12]&i_r[6]&i_r[4]&!i_r[3]) | (
-    !trap_entry_i&!i_r[4]&!i_r[3]&!in_cycle_2) | (!i_r[6]&!i_r[4]
-    &in_cycle_2) | (!trap_entry_i&i_r[6]&!i_r[5]&!i_r[3]) | (i_r[14]
-    &!i_r[2]) | (!trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (trap_entry_i) | (
-    i_r[2]) | (i_r[3]);
+assign instr_left_o = (!trap_entry_i&!i_r[14]&!i_r[6]&i_r[4]&!i_r[3]);
 
-assign instr_shft_o = (!trap_entry_i&i_r[13]&!i_r[6]&i_r[4]&!i_r[2]) | (
-    !trap_entry_i&!i_r[13]&!i_r[12]&!i_r[2]) | (!trap_entry_i&!i_r[4]
-    &!i_r[3]&!in_cycle_2) | (!i_r[6]&!i_r[4]&in_cycle_2) | (!trap_entry_i
-    &i_r[12]&i_r[6]&i_r[4]) | (!trap_entry_i&i_r[13]&i_r[6]&i_r[4]) | (
-    !trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (trap_entry_i) | (i_r[2]) | (
-    i_r[3]);
+assign instr_shft_o = (!trap_entry_i&!i_r[13]&i_r[12]&!i_r[6]&i_r[4]&!i_r[3]
+    &!i_r[2]);
 
-assign instr_st_o = (!trap_entry_i&!i_r[13]&!i_r[12]&i_r[6]&i_r[4]&!i_r[3]) | (
-    i_r[13]&i_r[12]) | (!trap_entry_i&!i_r[6]&i_r[5]&i_r[4]&!i_r[2]) | (
-    !trap_entry_i&i_r[12]&i_r[6]&i_r[4]) | (i_r[14]&!i_r[2]) | (
-    !trap_entry_i&!i_r[5]&!i_r[2]) | (!trap_entry_i&i_r[13]&i_r[6]&i_r[4]) | (
-    !trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (trap_entry_i) | (i_r[2]) | (
-    i_r[3]);
+assign instr_st_o = (!trap_entry_i&!i_r[14]&!i_r[12]&!i_r[6]&i_r[5]&!i_r[4]
+    &!i_r[3]&!i_r[2]) | (!trap_entry_i&!i_r[14]&!i_r[13]&!i_r[6]&i_r[5]
+    &!i_r[4]&!i_r[3]&!i_r[2]);
 
-assign instr_ld_o = (!i_r[13]&i_r[12]&i_r[4]&!i_r[2]&!in_cycle_2) | (!i_r[13]
-    &i_r[12]&i_r[4]&!i_r[2]&in_cycle_2) | (!trap_entry_i&i_r[14]&i_r[13]
-    &!i_r[5]&!i_r[4]) | (!trap_entry_i&i_r[13]&i_r[12]&!i_r[6]&!i_r[4]) | (
-    !trap_entry_i&i_r[13]&!i_r[6]&i_r[4]&!i_r[2]) | (!i_r[12]&i_r[4]) | (
-    !trap_entry_i&!i_r[6]&i_r[5]&!i_r[4]) | (!trap_entry_i&i_r[13]&i_r[6]
-    &i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (trap_entry_i) | (
-    i_r[2]) | (i_r[3]);
+assign instr_ld_o = (!trap_entry_i&!i_r[14]&!i_r[12]&!i_r[6]&!i_r[5]&!i_r[4]
+    &!i_r[3]&!i_r[2]) | (!trap_entry_i&!i_r[13]&!i_r[6]&!i_r[5]&!i_r[4]
+    &!i_r[3]&!i_r[2]);
 
-assign instr_slt_o = (!i_r[13]&i_r[12]&i_r[4]&!i_r[2]&!in_cycle_2) | (!i_r[13]
-    &i_r[12]&i_r[4]&!i_r[2]&in_cycle_2) | (!trap_entry_i&!i_r[13]&!i_r[12]
-    &!i_r[2]) | (!trap_entry_i&!i_r[4]&!i_r[3]&!in_cycle_2) | (!i_r[6]
-    &!i_r[4]&in_cycle_2) | (i_r[14]&!i_r[2]) | (!trap_entry_i&i_r[13]
-    &i_r[6]&i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (
-    trap_entry_i) | (i_r[2]) | (i_r[3]);
+assign instr_slt_o = (!trap_entry_i&!i_r[14]&i_r[13]&!i_r[6]&i_r[4]&!i_r[3]
+    &!i_r[2]);
 
-assign instr_csr_o = (!trap_entry_i&!i_r[13]&!i_r[12]&!i_r[2]) | (!trap_entry_i
-    &!i_r[6]&i_r[5]&i_r[4]&!i_r[2]) | (!trap_entry_i&!i_r[6]&i_r[5]
-    &!i_r[4]) | (i_r[14]&!i_r[2]) | (!trap_entry_i&!i_r[5]&!i_r[2]) | (
-    !trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]) | (trap_entry_i) | (i_r[2]) | (
-    i_r[3]);
+assign rf_we_o = (!i_r[6]&i_r[4]&!i_r[3]) | (i_r[6]&i_r[5]&!i_r[4]&i_r[2]) | (
+    !i_r[14]&i_r[13]&i_r[5]&i_r[4]&!i_r[3]&!i_r[2]) | (!i_r[14]&!i_r[12]
+    &!i_r[6]&!i_r[5]&!i_r[3]&!i_r[2]) | (!i_r[13]&!i_r[6]&!i_r[5]&!i_r[3]
+    &!i_r[2]) | (!i_r[14]&i_r[12]&i_r[5]&i_r[4]&!i_r[3]&!i_r[2]) | (
+    !i_r[14]&i_r[6]&!i_r[5]&i_r[4]&i_r[3]&!i_r[2]) | (trap_entry_i);
 
-assign rf_we_o = (!trap_entry_i&!i_r[13]&!i_r[12]&i_r[6]&i_r[4]&!i_r[3]) | (
-    !trap_entry_i&i_r[5]&i_r[3]&!i_r[2]) | (!trap_entry_i&i_r[14]&i_r[13]
-    &!i_r[5]&!i_r[4]) | (!trap_entry_i&i_r[6]&i_r[4]&i_r[2]) | (
-    !trap_entry_i&i_r[13]&i_r[12]&!i_r[6]&!i_r[4]) | (!trap_entry_i
-    &!i_r[6]&i_r[3]) | (!trap_entry_i&!i_r[5]&i_r[3]&i_r[2]) | (
-    !trap_entry_i&i_r[14]&i_r[6]&i_r[4]) | (!trap_entry_i&!i_r[6]&!i_r[4]
-    &i_r[2]) | (!trap_entry_i&i_r[6]&!i_r[5]&!i_r[3]) | (!trap_entry_i
-    &!i_r[6]&i_r[5]&!i_r[4]) | (!trap_entry_i&i_r[6]&!i_r[4]&!i_r[2]);
-
-assign ccx_o = (!trap_entry_i&i_r[5]&i_r[3]&!i_r[2]) | (!trap_entry_i&!i_r[6]
-    &i_r[3]) | (!i_r[3]) | (i_r[14]&!i_r[2]) | (!trap_entry_i&i_r[6]
-    &!i_r[4]&!i_r[2]) | (trap_entry_i) | (i_r[2]);
-
+assign ccx_o = (!trap_entry_i&!i_r[14]&i_r[6]&!i_r[5]&i_r[4]&i_r[3]&!i_r[2]);
 
 generate
   if (CONF == "CSR") begin
@@ -509,7 +434,8 @@ generate
   end
 
   if ((CONF == "INT") | (CONF == "CSR")) begin
-    assign mret_o = (!trap_entry_i&i_r[29]&!i_r[14]&!i_r[13]&!i_r[12]&i_r[6]&i_r[4]);
+    assign mret_o = (!trap_entry_i&i_r[29]&!i_r[14]&!i_r[13]&!i_r[12]&i_r[6]&i_r[5]
+    &i_r[4]&!i_r[3]&!i_r[2]);
   end else begin
     assign mret_o = 1'b0;
   end

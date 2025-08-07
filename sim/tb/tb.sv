@@ -145,6 +145,45 @@ wb_ram #(.depth(32768), .memfile("firmware/firmware.hex")) i_mem (
   .dat_o  ( wb_mem_rdat       )
 );
 
+
+// A very simple custom instruction for testing:
+//  AND instruction
+//  Delay result by RES_DLY clock cycles to test the control logic
+//  Handles handshaking signal
+//
+// With the first CHUNKSIZE bits arriving, ccx_req is set high for one clock cycle.
+// All other bits to make up the 32-bit word are arriving in chunks in the subsequent cycles.
+// The instruction can take arbitrary cycles to compute the result. In every cycle, ccx_resp is high
+// one chunk is consumed by the CPU. Only when all chunks for the full result are returned to the
+// CPU, the execution of the current instruction can be completed.
+
+localparam RES_DLY = 6;
+
+logic [CHUNKSIZE-1:0] ccx_rs_a;
+logic [CHUNKSIZE-1:0] ccx_rs_b;
+logic [CHUNKSIZE-1:0] ccx_res;
+
+logic                 ccx_req;
+logic                 ccx_resp;
+
+logic [CHUNKSIZE-1:0] shift_res [0:RES_DLY-1];
+logic                 shift_req [0:RES_DLY-1];
+
+integer i;
+always_ff @(posedge clk) begin
+  shift_res[0] <= ccx_rs_a & ccx_rs_b;
+  shift_req[0] <= ccx_req;
+  for (i = 1; i < RES_DLY; i = i + 1) begin
+      shift_res[i] <= shift_res[i-1];
+      shift_req[i] <= shift_req[i-1];
+  end
+end
+
+assign ccx_res  = shift_res[RES_DLY-1];
+assign ccx_resp = shift_req[RES_DLY-1];
+
+// ---
+
 fazyrv_top #( 
   .CHUNKSIZE  ( CHUNKSIZE ),
   .CONF       ( CONF      ),
@@ -169,7 +208,15 @@ fazyrv_top #(
   .wb_dmem_be_o   ( wb_cpu_dmem_be    ),
   .wb_dmem_dat_i  ( wb_cpu_dmem_rdat  ),
   .wb_dmem_adr_o  ( wb_cpu_dmem_adr   ),
-  .wb_dmem_dat_o  ( wb_cpu_dmem_wdat  )
+  .wb_dmem_dat_o  ( wb_cpu_dmem_wdat  ),
+
+  // for now, be test without having custom instructions
+  .ccx_rs_a_o     ( ccx_rs_a      ),
+  .ccx_rs_b_o     ( ccx_rs_b      ),
+  .ccx_res_i      ( ccx_res       ),
+  .ccx_sel_o      ( /* ignored */ ),
+  .ccx_req_o      ( ccx_req       ),
+  .ccx_resp_i     ( ccx_resp      )
 );
 
 endmodule
