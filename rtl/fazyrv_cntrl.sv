@@ -56,6 +56,7 @@
 //  - hlt_imm_o       Halt register that holds the immediate.
 //  - hlt_pc_ccx_o    Halt PC if this is a ccx instruction.
 //  - icyc_o          Number of instr. packed processed in that cycle.
+//  - icyc_done_o     icycle completed. Needed for ccx in LOGIC variant.
 // -----------------------------------------------------------------------------
 
 
@@ -107,7 +108,8 @@ module fazyrv_cntrl #(
   output logic hlt_imm_o,
   output logic hlt_pc_ccx_o,
 
-  output logic [$clog2(CPI)-1:0] icyc_o
+  output logic [$clog2(CPI)-1:0] icyc_o,
+  output logic icyc_done_o
 );
 
 logic [$clog2(CPI)-1:0] cyc_r, cyc_n;
@@ -127,6 +129,7 @@ always_ff @(posedge clk_i) begin
 end
 
 assign icyc_done = (cyc_r == '1);
+assign icyc_done_o = icyc_done;
 assign ccx_req_o = (state_r == ICYC1) & lsb_r;
 
 // heichips: ok, i'm trying to save this flop once the

@@ -11,6 +11,8 @@
 //  - clk_i       Clock input, sensitive to rising edge.
 //  - rst_in      Reset, low active.
 //  - shft_i      Shift data to next chunk.
+//  - shft_rd_i   Shift the destination reg. This is required for ccx when
+//                waiting for the result to arrive in the LOGIC variant.
 //  - ram_wstb_i  Unused.
 //  - ram_rstb_i  Unused.
 //
@@ -32,6 +34,7 @@ module fazyrv_rf_lut #( parameter CHUNKSIZE=2 )
   input  logic              clk_i,
   input  logic              rst_in,
   input  logic              shft_i,
+  input  logic              shft_rd_i,
   input  logic              ram_wstb_i,
   input  logic              ram_rstb_i,
 
@@ -84,7 +87,7 @@ generate
 
     fazyrv_shftreg #( .CHUNKSIZE(CHUNKSIZE) ) i_reg (
       .clk_i  ( clk_i   ),
-      .shft_i ( shft_i  ),
+      .shft_i ( shft_i | (we[i] & shft_rd_i) ),
       .dat_i  ( din     ),
       .dat_o  ( dout    )
 `ifdef RISCV_FORMAL

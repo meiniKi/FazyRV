@@ -35,6 +35,8 @@
 //  - wb_dmem_dat_o
 //                    Register file interface.
 //  - rf_shft_o         Shift regfile register to next chunk.
+//  - rf_shft_rd_o      Shift the destination reg. This is required for ccx when
+//                      waiting for the result to arrive in the LOGIC variant.
 //  - rf_ram_wstb_o     Strobe to write data to the regfile.
 //  - rf_ram_rstb_o     Strobe to read either ra or rb.
 //  - rf_rs1_o          Register address of ra.
@@ -87,6 +89,7 @@ module fazyrv_core #(
   output logic [31:0]   wb_dmem_dat_o,
 
   output logic                  rf_shft_o,
+  output logic                  rf_shft_rd_o,
   output logic                  rf_ram_wstb_o,
   output logic                  rf_ram_rstb_o,
   output logic [4:0]            rf_rs1_o,
@@ -162,6 +165,7 @@ logic id_except;
 logic cntrl_lsb;
 logic cntrl_msb;
 logic [$clog2(REG_WIDTH/CHUNKSIZE)-1:0] cntrl_icyc;
+logic cntrl_icyc_done;
 
 logic hlt_spm_a;
 logic hlt_regs;
@@ -231,6 +235,7 @@ assign br_and_taken = (id_instr_any_br & ex_cmp);
 
 assign trap_o = trap_entry_r; //id_except & cntrl_cyc_two;
 
+assign rf_shft_rd_o = id_instr_ccx ? ((~hlt_regs & ~hlt_pc) | cntrl_icyc_done) : 1'b0;
 
 //  88888888ba     ,ad8888ba,
 //  88      "8b   d8"'    `"8b
@@ -322,6 +327,7 @@ fazyrv_cntrl #(
   .lsb_o            ( cntrl_lsb         ),
   .msb_o            ( cntrl_msb         ),
   .icyc_o           ( cntrl_icyc        ),
+  .icyc_done_o      ( cntrl_icyc_done   ),
   .pc_inc_o         ( pc_inc            ),
 
   .rf_ram_wstb_o    ( rf_ram_wstb_o     ),
@@ -542,7 +548,7 @@ endgenerate
 assign rf_res = id_aux_use_cmp  ? { {CHUNKSIZE-1{1'b0}}, (cntrl_lsb & ex_cmp) } :
                                   ex_res;
 
-assign rf_shft_o  = ~hlt_regs;
+assign rf_shft_o  = ~hlt_regs & (~hlt_pc || (RFTYPE != "LOGIC"));
 assign rf_rs1_o   = id_rs1;
 assign rf_rs2_o   = id_rs2;
 assign rf_rd_o    = id_rd;

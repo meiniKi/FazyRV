@@ -87,6 +87,7 @@ module fazyrv_top #(
 );
 
 logic                 rf_shft;
+logic                 rf_shft_rd;
 logic                 rf_ram_wstb;
 logic                 rf_ram_rstb;
 logic [4:0]           rf_rs1;
@@ -144,6 +145,7 @@ fazyrv_core #(
   .wb_dmem_dat_o    ( wb_dmem_dat_o     ),
 
   .rf_shft_o        ( rf_shft           ),
+  .rf_shft_rd_o     ( rf_shft_rd        ),
   .rf_ram_wstb_o    ( rf_ram_wstb       ),
   .rf_ram_rstb_o    ( rf_ram_rstb       ),
   .rf_rs1_o         ( rf_rs1            ),
@@ -216,6 +218,7 @@ generate
       .clk_i                ( clk_i         ),
       .rst_in               ( rst_in        ),
       .shft_i               ( rf_shft       ),
+      .shft_rd_i            ( rf_shft_rd    ),
       .ram_wstb_i           ( rf_ram_wstb   ),
       .ram_rstb_i           ( rf_ram_rstb   ),
       .rs1_i                ( rf_rs1        ),

@@ -12,8 +12,8 @@ TOOLCHAIN_PREFIX = riscv32-unknown-elf-
 SRC_DESIGN 	= $(wildcard ../rtl/*.v ../rtl/*.sv)
 SRC_SIM 	= $(wildcard tb/*.v tb/*.sv)
 
-CHUNKSIZE	?= 8
-RFTYPE 		?= BRAM_BP
+CHUNKSIZE	?= 4
+RFTYPE 		?= LOGIC
 CONF 		?= MIN
 MEMDLY1		?= 0
 WITH_CSR 	?= 0
