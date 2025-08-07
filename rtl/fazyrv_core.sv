@@ -166,7 +166,7 @@ logic [$clog2(REG_WIDTH/CHUNKSIZE)-1:0] cntrl_icyc;
 logic hlt_spm_a;
 logic hlt_regs;
 logic hlt_imm;
-logic hlt_res;
+logic hlt_pc;
 
 logic shft_done;
 
@@ -186,6 +186,8 @@ logic cntrl_cyc_ack;
 logic cntrl_cyc_two;
 logic cntrl_cyc_shft;
 logic cntrl_cyc_two_shift_next;
+logic cntrl_ccx_req;
+logic cntrl_hlt_pc_ccx;
 
 logic [CHUNKSIZE-1:0] ex_ra_mxd;
 logic [CHUNKSIZE-1:0] ex_rb_mxd;
@@ -223,7 +225,7 @@ logic trap_pending_r;
 logic mcause_30;
 
 assign ccx_sel_o = id_ccx_sel;
-assign hlt_res = id_instr_ccx & ~ccx_resp_i; // heichips_todo
+assign hlt_pc = id_instr_ccx & cntrl_hlt_pc_ccx;
 
 assign br_and_taken = (id_instr_any_br & ex_cmp);
 
@@ -288,7 +290,7 @@ fazyrv_pc #( .CHUNKSIZE(CHUNKSIZE), .BOOTADR(BOOTADR) ) i_fazyrv_pc
   .clk_i        ( clk_i       ),
   .rst_in       ( rst_in      ),
   .inc_i        ( pc_inc      ), // always inc, maybe overwrite
-  .shift_i      ( ~hlt_regs   ),
+  .shift_i      ( ~hlt_regs & ~hlt_pc),
   .din_i        ( pc_din      ),
   .pc_ser_o     ( pc_ser      ),
   .pc_ser_inc_o ( pc_ser_inc  ),
@@ -345,10 +347,13 @@ fazyrv_cntrl #(
   .cyc_two_shift_next_o ( cntrl_cyc_two_shift_next  ),
   .cyc_shft_o           ( cntrl_cyc_shft            ),
 
+  .ccx_req_o        ( cntrl_ccx_req     ),
+  .ccx_done_i       ( ~id_instr_ccx | ccx_resp_i ),
+
   .hlt_regs_o       ( hlt_regs          ),
   .hlt_spm_a_o      ( hlt_spm_a         ),
   .hlt_imm_o        ( hlt_imm           ),
-  .hlt_res_i        ( hlt_res           )
+  .hlt_pc_ccx_o     ( cntrl_hlt_pc_ccx )
 );
 
 //  88  88888888888               d8     88  88b           d88  88888888888  88b           d88
@@ -447,8 +452,8 @@ generate
       .instr_jmp_o        ( id_instr_jmp      ),
       .instr_slt_o        ( id_instr_slt      ),
       .instr_csr_o        ( id_instr_csr      ),
-      .ccx_o              ( id_instr_ccx      ),
-      .ccx_sel_o          ( id_ccx_sel        ),
+      //.ccx_o              ( id_instr_ccx      ), todo
+      //.ccx_sel_o          ( id_ccx_sel        ),
 
       .csr_hpmtc_o        ( id_csr_hpmtc      ),
       .csr_6_o            ( id_csr_6          ),
@@ -717,7 +722,7 @@ assign ex_cmp = ex_cmp_tmp ^ id_alu_cmp_inv;
 
 assign ccx_rs_a_o = ex_ra; 
 assign ccx_rs_b_o = ex_rb;
-assign ccx_req_o  = cntrl_lsb;
+assign ccx_req_o  = id_instr_ccx & cntrl_ccx_req;
 
 fazyrv_alu #( .CHUNKSIZE(CHUNKSIZE) ) i_fazyrv_alu
 (
@@ -832,9 +837,11 @@ end
 `define INSTR_CSRRSI  (32'b??_?????_?????_?????_110??_???11_10011)
 `define INSTR_CSRRCI  (32'b??_?????_?????_?????_111??_???11_10011)
 `define INSTR_MRET    (32'b??_1????_?????_?????_000??_???11_10011)
+`define INSTR_CCX     (32'b??_?????_?????_?????_?????_???10_11011)
 
 always_comb begin
   casez(wb_imem_dat_i)
+    `INSTR_CCX:     dbg_ascii_insn_n = "ccx";
     `INSTR_LUI:     dbg_ascii_insn_n = "lui";
     `INSTR_AUIPC:   dbg_ascii_insn_n = "auipc";
     `INSTR_JAL:     dbg_ascii_insn_n = "jal";

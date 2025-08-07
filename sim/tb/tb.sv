@@ -153,11 +153,10 @@ wb_ram #(.depth(32768), .memfile("firmware/firmware.hex")) i_mem (
 //
 // With the first CHUNKSIZE bits arriving, ccx_req is set high for one clock cycle.
 // All other bits to make up the 32-bit word are arriving in chunks in the subsequent cycles.
-// The instruction can take arbitrary cycles to compute the result. In every cycle, ccx_resp is high
-// one chunk is consumed by the CPU. Only when all chunks for the full result are returned to the
-// CPU, the execution of the current instruction can be completed.
+// The instruction can take arbitrary cycles to compute the result. At some point the ccx must
+// hand back the chunks consecutively to the CPU and raise ccx_resp in the cycle of the last chunk.
 
-localparam RES_DLY = 6;
+localparam RES_DLY = 1;
 
 logic [CHUNKSIZE-1:0] ccx_rs_a;
 logic [CHUNKSIZE-1:0] ccx_rs_b;
@@ -166,8 +165,12 @@ logic [CHUNKSIZE-1:0] ccx_res;
 logic                 ccx_req;
 logic                 ccx_resp;
 
+//assign ccx_resp = 1'b1;
+//assign ccx_res = ccx_rs_a & ccx_rs_b;
+
+
 logic [CHUNKSIZE-1:0] shift_res [0:RES_DLY-1];
-logic                 shift_req [0:RES_DLY-1];
+logic                 shift_req [0:(RES_DLY-1 + 32/CHUNKSIZE-1)];
 
 integer i;
 always_ff @(posedge clk) begin
@@ -175,14 +178,18 @@ always_ff @(posedge clk) begin
   shift_req[0] <= ccx_req;
   for (i = 1; i < RES_DLY; i = i + 1) begin
       shift_res[i] <= shift_res[i-1];
+  end
+  for (i = 1; i < RES_DLY + 32/CHUNKSIZE-1; i = i + 1) begin
       shift_req[i] <= shift_req[i-1];
   end
 end
 
 assign ccx_res  = shift_res[RES_DLY-1];
-assign ccx_resp = shift_req[RES_DLY-1];
+assign ccx_resp = shift_req[RES_DLY-1 + 32/CHUNKSIZE-1];
+
 
 // ---
+
 
 fazyrv_top #( 
   .CHUNKSIZE  ( CHUNKSIZE ),

@@ -49,9 +49,12 @@
 //  - cyc_two_shift_next_o Entering shift in next cycle.
 //  - cyc_shft_o      In cycle: wait for shift to be done.
 //
+//  - ccx_req_o       Issue new custom instruction execution to ccx.
+//
 //  - hlt_regs_o      Halt registers, don't modify their content.
 //  - hlt_spm_a_o     Halt spm_a, don't modify its content.
 //  - hlt_imm_o       Halt register that holds the immediate.
+//  - hlt_pc_ccx_o    Halt PC if this is a ccx instruction.
 //  - icyc_o          Number of instr. packed processed in that cycle.
 // -----------------------------------------------------------------------------
 
@@ -96,10 +99,13 @@ module fazyrv_cntrl #(
   output logic cyc_two_shift_next_o,
   output logic cyc_shft_o,
 
+  output logic ccx_req_o,
+  input  logic ccx_done_i,
+
   output logic hlt_regs_o,
   output logic hlt_spm_a_o,
   output logic hlt_imm_o,
-  input  logic hlt_res_i,
+  output logic hlt_pc_ccx_o,
 
   output logic [$clog2(CPI)-1:0] icyc_o
 );
@@ -121,7 +127,16 @@ always_ff @(posedge clk_i) begin
 end
 
 assign icyc_done = (cyc_r == '1);
+assign ccx_req_o = (state_r == ICYC1) & lsb_r;
 
+// heichips: ok, i'm trying to save this flop once the
+// rest is working
+logic icyc_done_dly;
+always_ff @(posedge clk_i) begin
+  icyc_done_dly <= icyc_done;
+end
+
+assign hlt_pc_ccx_o = icyc_done_dly;
 
 // TODO: check if this can be optimized, e.g.,
 // not compare with ICYC1.
@@ -230,12 +245,11 @@ always_comb begin
     ICYC1: begin
       hlt_imm_o = any_br_i;
 
-      // heichips_todo check if this breaks something!
-      if (hlt_res_i) begin
+      if (icyc_done & ~ccx_done_i) begin
         cyc_n = cyc_r;
       end
 
-      if (icyc_done) begin
+      if (icyc_done & ccx_done_i) begin
         msb_o   = 1'b1;
         state_n = IFETCH;
 

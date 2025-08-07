@@ -137,6 +137,29 @@ module fazyrv_decode #(
   output logic              except_o
 );
 
+// This is how custom instructions are smoke-tested. We simply overwrite the
+// AND instruction by a custom instruction and implement the AND in the tb ;)
+logic [31:0] instr;
+
+
+`define SMOKETEST_CCX
+
+`ifdef SMOKETEST_CCX
+(* keep *) logic dbg_ccx;
+always_comb begin
+  if ((instr_i[6:0] == 'b0110011) && (instr_i[14:12] == 'h7)) begin
+    instr = {instr_i[21:15], 3'b0, instr_i[11:7], 7'h5B};
+  end else begin
+    instr = instr_i;
+  end
+end
+assign dbg_ccx = (instr_i != instr);
+`else 
+assign instr = instr_i;
+`endif
+
+
+
 // If 1, a smaller decoder is implemented. However, this 
 // leads to a reduced fmax
 localparam SMALL = 1;
@@ -158,9 +181,9 @@ always_ff @(posedge clk_i) begin
     rs2_r <= 'b0;
     rd_r  <= 'b0;
   end else if (stb_ir_i) begin
-    rs1_r <= instr_i[19:15];
-    rs2_r <= instr_i[24:20];
-    rd_r  <= instr_i[11:7];
+    rs1_r <= instr[19:15];
+    rs2_r <= instr[24:20];
+    rd_r  <= instr[11:7];
   end
 end
 
@@ -181,13 +204,13 @@ logic [31:0] i_imm;
 logic [31:0] s_imm;
 logic [31:0] b_imm;
 
-assign i_imm = { {21{instr_i[31]}}, instr_i[30:20] };
-assign s_imm = { {21{instr_i[31]}}, instr_i[30:25], instr_i[11:7] };
-assign b_imm = { {20{instr_i[31]}}, instr_i[7], instr_i[30:25],
-                  instr_i[11:8], 1'd0};
-assign u_imm = { instr_i[31:12], 12'd0 };
-assign j_imm = { {12{instr_i[31]}}, instr_i[19:12], instr_i[20],
-                  instr_i[30:21], 1'd0 };
+assign i_imm = { {21{instr[31]}}, instr[30:20] };
+assign s_imm = { {21{instr[31]}}, instr[30:25], instr[11:7] };
+assign b_imm = { {20{instr[31]}}, instr[7], instr[30:25],
+                  instr[11:8], 1'd0};
+assign u_imm = { instr[31:12], 12'd0 };
+assign j_imm = { {12{instr[31]}}, instr[19:12], instr[20],
+                  instr[30:21], 1'd0 };
 
 logic is_u_imm;
 logic is_j_imm;
@@ -231,10 +254,10 @@ logic [31:0] i_r;
 
 always_ff @(posedge clk_i) begin
   if (~rst_in) begin
-    // either to instr_i or to NOP, all 0s causes trap
-    i_r <= instr_i; // 'b0;
+    // either to instr or to NOP, all 0s causes trap
+    i_r <= instr; // 'b0;
   end else if (stb_ir_i) begin
-    i_r <= instr_i;
+    i_r <= instr;
   end
 end
 
@@ -275,56 +298,56 @@ generate
       is_j_imm = 1'b0;
       is_u_imm = 1'b0;
 
-      if (instr_i[2] & instr_i[3])
+      if (instr[2] & instr[3])
         is_j_imm = 1'b1;
-      else if (~instr_i[2] & ~instr_i[4] & instr_i[6])
+      else if (~instr[2] & ~instr[4] & instr[6])
         is_b_imm = 1'b1;
-      else if (instr_i[2] & ~instr_i[6])
+      else if (instr[2] & ~instr[6])
         is_u_imm = 1'b1;
-      else if (~instr_i[2] & ~instr_i[4] & instr_i[5])
+      else if (~instr[2] & ~instr[4] & instr[5])
         is_s_imm = 1'b1;
       // This does not work for csrrxi anymore, but fixes mret efficiently
-      //else if (~(instr_i[4] & instr_i[5] & ~instr_i[6]))
-      else if (~(instr_i[4] & instr_i[5]))
+      //else if (~(instr[4] & instr[5] & ~instr[6]))
+      else if (~(instr[4] & instr[5]))
         is_i_imm = 1'b1;
 
     end
   end else begin
 
-    assign is_b_imm = (!instr_i[13]&instr_i[6]&instr_i[5]&!instr_i[4]&
-        !instr_i[3]&!instr_i[2]&instr_i[1]&instr_i[0]) | (
-        instr_i[14]&instr_i[6]&instr_i[5]&!instr_i[4]&!instr_i[3]
-        &!instr_i[2]&instr_i[1]&instr_i[0]);
+    assign is_b_imm = (!instr[13]&instr[6]&instr[5]&!instr[4]&
+        !instr[3]&!instr[2]&instr[1]&instr[0]) | (
+        instr[14]&instr[6]&instr[5]&!instr[4]&!instr[3]
+        &!instr[2]&instr[1]&instr[0]);
 
-    assign is_s_imm = (!instr_i[14]&!instr_i[12]&!instr_i[6]&instr_i[5]&
-        !instr_i[4]&!instr_i[3]&!instr_i[2]
-        &instr_i[1]&instr_i[0]) | (!instr_i[14]&!instr_i[13]&!instr_i[6]&
-        instr_i[5]&!instr_i[4]&!instr_i[3]
-        &!instr_i[2]&instr_i[1]&instr_i[0]);
+    assign is_s_imm = (!instr[14]&!instr[12]&!instr[6]&instr[5]&
+        !instr[4]&!instr[3]&!instr[2]
+        &instr[1]&instr[0]) | (!instr[14]&!instr[13]&!instr[6]&
+        instr[5]&!instr[4]&!instr[3]
+        &!instr[2]&instr[1]&instr[0]);
 
-    assign is_i_imm = (!instr_i[31]&!instr_i[30]&!instr_i[29]&!instr_i[28]&
-    !instr_i[27]&!instr_i[26]&!instr_i[25]&!instr_i[6]&!instr_i[5]&instr_i[4
-    ]&!instr_i[3]&!instr_i[2]&instr_i[1]&instr_i[0]) | (!instr_i[31]
-        &!instr_i[29]&!instr_i[28]&!instr_i[27]&!instr_i[26]&!instr_i[25]&
-        instr_i[14]&!instr_i[6]&!instr_i[5]
-        &instr_i[4]&!instr_i[3]&!instr_i[2]&instr_i[1]&instr_i[0]) |
-        (!instr_i[12]&!instr_i[6]&!instr_i[5]
-        &instr_i[4]&!instr_i[3]&!instr_i[2]&instr_i[1]&instr_i[0]) |
-        (!instr_i[14]&!instr_i[13]&!instr_i[12]
-        &instr_i[6]&instr_i[5]&!instr_i[4]&!instr_i[3]&instr_i[2]&
-        instr_i[1]&instr_i[0]) | (!instr_i[14]
-        &!instr_i[12]&!instr_i[6]&!instr_i[5]&!instr_i[3]&!instr_i[2]&
-        instr_i[1]&instr_i[0]) | (!instr_i[13]
-        &!instr_i[6]&!instr_i[5]&!instr_i[4]&!instr_i[3]&!instr_i[2]&
-        instr_i[1]&instr_i[0]) | (instr_i[13]
-        &!instr_i[6]&!instr_i[5]&instr_i[4]&!instr_i[3]&!instr_i[2]&
-        instr_i[1]&instr_i[0]);
+    assign is_i_imm = (!instr[31]&!instr[30]&!instr[29]&!instr[28]&
+    !instr[27]&!instr[26]&!instr[25]&!instr[6]&!instr[5]&instr[4
+    ]&!instr[3]&!instr[2]&instr[1]&instr[0]) | (!instr[31]
+        &!instr[29]&!instr[28]&!instr[27]&!instr[26]&!instr[25]&
+        instr[14]&!instr[6]&!instr[5]
+        &instr[4]&!instr[3]&!instr[2]&instr[1]&instr[0]) |
+        (!instr[12]&!instr[6]&!instr[5]
+        &instr[4]&!instr[3]&!instr[2]&instr[1]&instr[0]) |
+        (!instr[14]&!instr[13]&!instr[12]
+        &instr[6]&instr[5]&!instr[4]&!instr[3]&instr[2]&
+        instr[1]&instr[0]) | (!instr[14]
+        &!instr[12]&!instr[6]&!instr[5]&!instr[3]&!instr[2]&
+        instr[1]&instr[0]) | (!instr[13]
+        &!instr[6]&!instr[5]&!instr[4]&!instr[3]&!instr[2]&
+        instr[1]&instr[0]) | (instr[13]
+        &!instr[6]&!instr[5]&instr[4]&!instr[3]&!instr[2]&
+        instr[1]&instr[0]);
 
-    assign is_j_imm = (instr_i[6]&instr_i[5]&!instr_i[4]&instr_i[3]&
-    instr_i[2]&instr_i[1]&instr_i[0]);
+    assign is_j_imm = (instr[6]&instr[5]&!instr[4]&instr[3]&
+    instr[2]&instr[1]&instr[0]);
 
-    assign is_u_imm = (!instr_i[6]&instr_i[4]&!instr_i[3]&instr_i[2]&
-    instr_i[1]&instr_i[0]);
+    assign is_u_imm = (!instr[6]&instr[4]&!instr[3]&instr[2]&
+    instr[1]&instr[0]);
 end
 endgenerate
 
