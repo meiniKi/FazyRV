@@ -142,7 +142,7 @@ module fazyrv_decode #(
 logic [31:0] instr;
 
 
-`define SMOKETEST_CCX
+//`define SMOKETEST_CCX
 
 `ifdef SMOKETEST_CCX
 (* keep *) logic dbg_ccx;
