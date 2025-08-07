@@ -314,40 +314,20 @@ generate
     end
   end else begin
 
-    assign is_b_imm = (!instr[13]&instr[6]&instr[5]&!instr[4]&
-        !instr[3]&!instr[2]&instr[1]&instr[0]) | (
-        instr[14]&instr[6]&instr[5]&!instr[4]&!instr[3]
-        &!instr[2]&instr[1]&instr[0]);
+    assign is_b_imm = (!instr[13]&instr[6]&instr[5]&!instr[4]&!instr[3]&!instr[2]) | (instr[14]
+        &instr[6]&instr[5]&!instr[4]&!instr[3]&!instr[2]);
 
-    assign is_s_imm = (!instr[14]&!instr[12]&!instr[6]&instr[5]&
-        !instr[4]&!instr[3]&!instr[2]
-        &instr[1]&instr[0]) | (!instr[14]&!instr[13]&!instr[6]&
-        instr[5]&!instr[4]&!instr[3]
-        &!instr[2]&instr[1]&instr[0]);
+    assign is_s_imm = (!instr[14]&!instr[12]&!instr[6]&instr[5]&!instr[4]&!instr[3]&!instr[2]) | (
+        !instr[14]&!instr[13]&!instr[6]&instr[5]&!instr[4]&!instr[3]&!instr[2]);
 
-    assign is_i_imm = (!instr[31]&!instr[30]&!instr[29]&!instr[28]&
-    !instr[27]&!instr[26]&!instr[25]&!instr[6]&!instr[5]&instr[4
-    ]&!instr[3]&!instr[2]&instr[1]&instr[0]) | (!instr[31]
-        &!instr[29]&!instr[28]&!instr[27]&!instr[26]&!instr[25]&
-        instr[14]&!instr[6]&!instr[5]
-        &instr[4]&!instr[3]&!instr[2]&instr[1]&instr[0]) |
-        (!instr[12]&!instr[6]&!instr[5]
-        &instr[4]&!instr[3]&!instr[2]&instr[1]&instr[0]) |
-        (!instr[14]&!instr[13]&!instr[12]
-        &instr[6]&instr[5]&!instr[4]&!instr[3]&instr[2]&
-        instr[1]&instr[0]) | (!instr[14]
-        &!instr[12]&!instr[6]&!instr[5]&!instr[3]&!instr[2]&
-        instr[1]&instr[0]) | (!instr[13]
-        &!instr[6]&!instr[5]&!instr[4]&!instr[3]&!instr[2]&
-        instr[1]&instr[0]) | (instr[13]
-        &!instr[6]&!instr[5]&instr[4]&!instr[3]&!instr[2]&
-        instr[1]&instr[0]);
+    assign is_i_imm = (instr[6]&instr[5]&!instr[4]&!instr[3]&instr[2]) | (!instr[13]&!instr[6]
+        &!instr[5]&!instr[3]&!instr[2]) | (!instr[14]&!instr[12]&!instr[6]&!instr[5]&!instr[3]
+        &!instr[2]) | (instr[14]&instr[6]&!instr[5]&instr[4]&instr[3]&!instr[2]) | (!instr[6]
+        &!instr[5]&instr[4]&!instr[3]&!instr[2]);
 
-    assign is_j_imm = (instr[6]&instr[5]&!instr[4]&instr[3]&
-    instr[2]&instr[1]&instr[0]);
+    assign is_j_imm = (instr[6]&instr[5]&!instr[4]&instr[3]&instr[2]);
 
-    assign is_u_imm = (!instr[6]&instr[4]&!instr[3]&instr[2]&
-    instr[1]&instr[0]);
+    assign is_u_imm = (!instr[6]&instr[4]&!instr[3]&instr[2]);
 end
 endgenerate
 
@@ -362,8 +342,9 @@ assign alu_aux_rs_b_imm_o = (!i_r[13]&!i_r[6]&!i_r[5]&!i_r[3]&!i_r[2]&!in_cycle_
     &i_r[5]&!i_r[4]&!i_r[3]&in_cycle_2) | (i_r[6]&i_r[5]&!i_r[4]&i_r[2]) | (
     !i_r[14]&!i_r[12]&!i_r[6]&!i_r[4]&!i_r[3]&!i_r[2]&!in_cycle_2) | (
     !i_r[14]&!i_r[13]&!i_r[6]&!i_r[4]&!i_r[3]&!i_r[2]&!in_cycle_2) | (
-    i_r[13]&!i_r[6]&!i_r[5]&i_r[4]&!i_r[3]) | (!i_r[12]&!i_r[6]&!i_r[5]
-    &i_r[4]&!i_r[3]) | (!i_r[6]&i_r[4]&!i_r[3]&i_r[2]);
+    i_r[13]&!i_r[6]&!i_r[5]&i_r[4]&!i_r[3]) | (i_r[14]&i_r[6]&!i_r[5]
+    &i_r[4]&i_r[3]&!i_r[2]) | (!i_r[12]&!i_r[6]&!i_r[5]&i_r[4]&!i_r[3]) | (
+    !i_r[6]&i_r[4]&!i_r[3]&i_r[2]);
 
 assign alu_aux_rs_a_pc_o = (!i_r[13]&i_r[6]&i_r[5]&!i_r[4]&!i_r[3]&in_cycle_2) | (
     i_r[14]&i_r[6]&i_r[5]&!i_r[4]&!i_r[3]&in_cycle_2) | (!i_r[6]&i_r[4]
@@ -433,13 +414,14 @@ assign instr_ld_o = (!trap_entry_i&!i_r[14]&!i_r[12]&!i_r[6]&!i_r[5]&!i_r[4]
 assign instr_slt_o = (!trap_entry_i&!i_r[14]&i_r[13]&!i_r[6]&i_r[4]&!i_r[3]
     &!i_r[2]);
 
-assign rf_we_o = (!i_r[6]&i_r[4]&!i_r[3]) | (i_r[6]&i_r[5]&!i_r[4]&i_r[2]) | (
-    !i_r[14]&i_r[13]&i_r[5]&i_r[4]&!i_r[3]&!i_r[2]) | (!i_r[14]&!i_r[12]
-    &!i_r[6]&!i_r[5]&!i_r[3]&!i_r[2]) | (!i_r[13]&!i_r[6]&!i_r[5]&!i_r[3]
-    &!i_r[2]) | (!i_r[14]&i_r[12]&i_r[5]&i_r[4]&!i_r[3]&!i_r[2]) | (
-    !i_r[14]&i_r[6]&!i_r[5]&i_r[4]&i_r[3]&!i_r[2]) | (trap_entry_i);
+assign ccx_o = (!trap_entry_i&i_r[6]&!i_r[5]&i_r[4]&i_r[3]&!i_r[2]);
 
-assign ccx_o = (!trap_entry_i&!i_r[14]&i_r[6]&!i_r[5]&i_r[4]&i_r[3]&!i_r[2]);
+assign rf_we_o = (!i_r[6]&i_r[4]&!i_r[3]) | (i_r[6]&i_r[5]&!i_r[4]&i_r[2]) | (
+    !i_r[14]&!i_r[12]&!i_r[6]&!i_r[5]&!i_r[3]&!i_r[2]) | (!i_r[14]
+    &i_r[13]&i_r[5]&i_r[4]&!i_r[3]&!i_r[2]) | (!i_r[13]&!i_r[6]&!i_r[5]
+    &!i_r[3]&!i_r[2]) | (!i_r[14]&i_r[12]&i_r[5]&i_r[4]&!i_r[3]&!i_r[2]) | (
+    i_r[6]&!i_r[5]&i_r[4]&i_r[3]&!i_r[2]) | (trap_entry_i);
+
 
 generate
   if (CONF == "CSR") begin
