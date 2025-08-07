@@ -5,14 +5,14 @@
 A minimal-area RISC-V core with a scalable data path to 1, 2, 4, or 8 bits and manifold variants.
 
 > [!CAUTION]
-> Modified FazyRV to add a chunked custom instruction interface as part of the HeiChips 2025 hackathon. _Not_ verified. Use with care.
+> Modified FazyRV to add a Chunked Custom eXtension (CCX) interface as part of the HeiChips 2025 hackathon (4-bit, LOGIC variant). _Not_ verified. Use with care.
 
-## Timing diagram
+## CCX Timing diagram
 ![ccx](https://svg.wavedrom.com/github/meiniKi/FazyRV/heichips25_ccx/doc/ccx.json5)
 
 ## Table of Content
 - [FazyRV -- A Scalable RISC-V Core](#fazyrv----a-scalable-risc-v-core)
-  - [Timing diagram](#timing-diagram)
+  - [CCX Timing diagram](#ccx-timing-diagram)
   - [Table of Content](#table-of-content)
   - [Introduction](#introduction)
     - [Area / Resource Demand](#area--resource-demand)
