@@ -7,8 +7,12 @@ A minimal-area RISC-V core with a scalable data path to 1, 2, 4, or 8 bits and m
 > [!CAUTION]
 > Modified FazyRV to add a chunked custom instruction interface as part of the HeiChips 2025 hackathon. _Not_ verified. Use with care.
 
+## Timing diagram
+![ccx](https://svg.wavedrom.com/github/meiniKi/FazyRV/heichips25_ccx/doc/ccx.json5)
+
 ## Table of Content
 - [FazyRV -- A Scalable RISC-V Core](#fazyrv----a-scalable-risc-v-core)
+  - [Timing diagram](#timing-diagram)
   - [Table of Content](#table-of-content)
   - [Introduction](#introduction)
     - [Area / Resource Demand](#area--resource-demand)

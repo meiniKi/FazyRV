@@ -1,0 +1,7 @@
+{signal: [
+  {name: 'clk', wave: 'p......|..............'},
+  {name: 'ccx_req', wave: '0.10...|..10...|......'},
+  {name: 'ccx_res', wave: '0....10|.......|...10.'},
+  {name: 'ccx_rsx', wave: 'x.3456x|xx3456x|xxxxxx', data: ['c0', 'c1', 'c2', 'c3','c0', 'c1', 'c2', 'c3']},
+  {name: 'ccx_res', wave: 'x.3456x|xxxxxxx|3456xx', data: ['c0*', 'c1*', 'c2*', 'c3*','c0*', 'c1*', 'c2*', 'c3*']},
+]}
