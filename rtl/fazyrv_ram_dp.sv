@@ -43,6 +43,10 @@ always_ff @(posedge clk_i) begin
   end
 end
 
+initial begin
+  ram_r[0] = '0;
+end
+
 
 int i;
 
