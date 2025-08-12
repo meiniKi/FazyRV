@@ -171,8 +171,16 @@ fazyrv_top #(
   .wb_dmem_be_o   ( wb_cpu_dmem_be    ),
   .wb_dmem_dat_i  ( wb_cpu_dmem_rdat  ),
   .wb_dmem_adr_o  ( wb_cpu_dmem_adr   ),
-  .wb_dmem_dat_o  ( wb_cpu_dmem_wdat  )
+  .wb_dmem_dat_o  ( wb_cpu_dmem_wdat  ),
+
+  .ccx_rs_a_o     (         ),
+  .ccx_rs_b_o     (         ),
+  .ccx_res_i      ( 'b0     ),
+  .ccx_sel_o      (         ),
+  .ccx_req_o      (         ),
+  .ccx_resp_i     ( 'b0     )
 );
+
 
 // Adopted from SERV
 `ifdef SIGNATURE
@@ -182,7 +190,7 @@ logic halt_en;
 assign halt_en = (wb_mem_adr[31:28] == 4'h9) & wb_mem_cyc & wb_mem_ack;
 assign sig_en = (wb_mem_adr[31:28] == 4'h8) & wb_mem_cyc & wb_mem_ack;
 
-logic [1023:0] signature_file;
+logic [4095:0] signature_file;
 
 integer f = 0;
 
