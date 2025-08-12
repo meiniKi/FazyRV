@@ -141,6 +141,8 @@ module fazyrv_decode #(
 // AND instruction by a custom instruction and implement the AND in the tb ;)
 logic [31:0] instr;
 
+// let the tool optimize away the bits that are not needed
+(* keep *) logic [31:0] i_r;
 
 //`define SMOKETEST_CCX
 
@@ -249,8 +251,6 @@ assign imm_o = imm_r[CHUNKSIZE-1:0];
 
 // --- store opcode ---
 
-// let the tool optimize away the bits that are not needed
-logic [31:0] i_r;
 
 always_ff @(posedge clk_i) begin
   if (~rst_in) begin
