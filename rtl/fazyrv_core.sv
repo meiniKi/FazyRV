@@ -548,7 +548,10 @@ endgenerate
 assign rf_res = id_aux_use_cmp  ? { {CHUNKSIZE-1{1'b0}}, (cntrl_lsb & ex_cmp) } :
                                   ex_res;
 
+/* verilator lint_off WIDTHEXPAND */
 assign rf_shft_o  = ~hlt_regs & (~hlt_pc || (RFTYPE != "LOGIC"));
+/* verilator lint_on WIDTHEXPAND */
+
 assign rf_rs1_o   = id_rs1;
 assign rf_rs2_o   = id_rs2;
 assign rf_rd_o    = id_rd;
