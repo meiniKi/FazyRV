@@ -182,7 +182,7 @@ logic halt_en;
 assign halt_en = (wb_mem_adr[31:28] == 4'h9) & wb_mem_cyc & wb_mem_ack;
 assign sig_en = (wb_mem_adr[31:28] == 4'h8) & wb_mem_cyc & wb_mem_ack;
 
-logic [1023:0] signature_file;
+logic [4095:0] signature_file;
 
 integer f = 0;
 

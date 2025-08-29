@@ -1,0 +1,18 @@
+
+[options]
+mode bmc
+depth 80
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal fazyrv_hadd.v
+read -sv -formal fazyrv_pc.sv
+read -sv -formal fazyrv_pc_fv.sv
+prep -top fazyrv_pc_fv
+
+[files]
+../../rtl/fazyrv_hadd.v
+../../rtl/fazyrv_pc.sv
+fazyrv_pc_fv.sv

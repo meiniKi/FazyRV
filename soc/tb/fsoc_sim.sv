@@ -23,7 +23,7 @@ module fsoc_sim #(
 localparam MEMDLY1  = 0;
 localparam GPOCNT   = 3;
 
-logic [1023:0] firmware_file;
+logic [4095:0] firmware_file;
 initial
   if ($value$plusargs("firmware=%s", firmware_file)) begin
 	  $display("Loading RAM from %0s", firmware_file);
