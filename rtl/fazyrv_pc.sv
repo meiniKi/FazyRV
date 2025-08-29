@@ -72,9 +72,10 @@ endgenerate
 always_ff @(posedge clk_i) begin
   if (~rst_in) begin
     carry_r <= 'b0;
-  end
+  end else begin
     carry_r <= add_rem |
             {{CARRY_REG_WIDTH-1{1'b0}}, (carry_rem | carry_vec[CHUNKSIZE])};
+  end
 end
 
 genvar i;
