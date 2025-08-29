@@ -174,14 +174,14 @@ riscof.run.%: $(SRC_DESIGN) $(SRC_SYNTH)
 # workaround using the tmp.txt file
 
 riscof.all: $(addprefix riscof.run., $(RVTESTS_PARAMS))
-	@if [ -z $$(find $(SUMMARY_DIR_RISCOF) -name "*.log") ]; then \
+	@if [ -z "$$(find $(SUMMARY_DIR_RISCOF) -name '*.log')" ]; then \
 		echo "Error: No *.log files found"; \
 		exit 1; \
 	fi
 
-	@for log_file in $(wildcard $(SUMMARY_DIR_RISCOF)/*.log); do \
-		if [ $$(cat "$$log_file") != "0" ]; then \
-			echo "Error: $$log_file RICOF failed"; \
+	@for log_file in $$(find $(SUMMARY_DIR_RISCOF) -name '*.log'); do \
+		if [ "$$(cat $$log_file)" != "0" ]; then \
+			echo "Error: $$log_file RISCOF failed"; \
 			exit 1; \
 		fi; \
 	done
