@@ -28,5 +28,5 @@ runs:
         cd ..
 
     - shell: bash
-      run: echo "$(pwd)/.sail/c_emulator" >> $GITHUB_PATH
+      run: echo "$(pwd)/.sail/build/c_emulator" >> $GITHUB_PATH
 

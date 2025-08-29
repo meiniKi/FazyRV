@@ -13,7 +13,7 @@ jobs:
       - name: oss-cad-suite
         uses: YosysHQ/setup-oss-cad-suite@v3
         with:
-          version: '2024-02-02'
+          version: '2025-07-30'
 
       - uses: actions/setup-python@v5
         with:
@@ -43,7 +43,7 @@ jobs:
       - name: oss-cad-suite
         uses: YosysHQ/setup-oss-cad-suite@v3
         with:
-          version: '2024-02-02'
+          version: '2025-07-30'
 
       - uses: actions/setup-python@v5
         with:

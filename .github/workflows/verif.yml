@@ -14,7 +14,7 @@ jobs:
     - name: oss-cad-suite
       uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        version: '2024-02-02'
+        version: '2025-07-30'
 
     - name: gcc
       uses: ./.github/workflows/setup-riscv-toolchain
@@ -48,7 +48,7 @@ jobs:
     - name: oss-cad-suite
       uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        version: '2024-02-02'
+        version: '2025-07-30'
 
     - name: gcc
       uses: ./.github/workflows/setup-riscv-toolchain
@@ -74,7 +74,7 @@ jobs:
     - name: oss-cad-suite
       uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        version: '2024-02-02'
+        version: '2025-07-30'
 
     - name: cov.8
       run: make fv.rvformal.cov.insn.8
@@ -95,7 +95,7 @@ jobs:
     - name: oss-cad-suite
       uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        version: '2024-02-02'
+        version: '2025-07-30'
 
     - name: cov.8
       run: make fv.rvformal.cov.reg.8
@@ -116,7 +116,7 @@ jobs:
     - name: oss-cad-suite
       uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        version: '2024-02-02'
+        version: '2025-07-30'
 
     - name: bmc.8
       run: make fv.rvformal.bmc.insn.8
@@ -137,7 +137,7 @@ jobs:
     - name: oss-cad-suite
       uses: YosysHQ/setup-oss-cad-suite@v3
       with:
-        version: '2024-02-02'
+        version: '2025-07-30'
 
     - name: bmc.8
       run: make fv.rvformal.bmc.reg.8
