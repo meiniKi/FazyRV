@@ -12,15 +12,15 @@ runs:
     - shell: bash
       if: steps.cache-sail-riscv.outputs.cache-hit != 'true'
       run: |
+        wget https://github.com/rems-project/sail/releases/download/0.19.1-linux-binary/sail.tar.gz
+        mkdir sail_0_19_1
+        tar -xzf sail.tar.gz -C sail_0_19_1
+        echo "$(pwd)/sail_0_19_1/sail/bin/" >> $GITHUB_PATH 
         git clone --recursive https://github.com/rems-project/sail-riscv.git .sail
-        sudo apt install -y opam build-essential libgmp-dev z3 pkg-config zlib1g-dev
-        opam init -y --disable-sandboxing
-        opam switch create ocaml-base-compiler.4.06.1
-        opam install sail -y
-        eval $(opam config env)
+        sudo apt install -y build-essential libgmp-dev z3 pkg-config zlib1g-dev
         cd .sail
-        git checkout tags/0.5
-        ARCH=RV32 make
+        git checkout tags/0.8
+        ./build_simulators.sh
         cd ..
 
     - shell: bash
