@@ -63,8 +63,13 @@ end
 
 // Remember shifted in data
 //
-logic [31:0] fv_din = 'b0;
+logic [31:0] fv_din = 2'b11;
 always_ff @(posedge clk_i) fv_din <= {din, fv_din[31:CHUNKSIZE]};
+
+// We can safely assume the PC does not overflow
+always_ff @(posedge clk_i) begin
+  if (fv_cycle_check) assume (fv_din != 32'hFFFF_FFFF);
+end
 
 logic [31:0] fv_pcinc = 'b0;
 always_ff @(posedge clk_i) fv_pcinc <= {pc_ser_inc, fv_pcinc[31:CHUNKSIZE]};
@@ -85,7 +90,7 @@ fazyrv_pc #(
   .rst_in        ( rst_in             ),
   // Continuous inc to strobe; handle here for simplicity
   .inc_i         ( inc & fv_cycle_lsb & fv_pc_op ),
-  .shift_i       ( shift  & fv_pc_op  ),
+  .shift_i       ( shift & fv_pc_op   ),
   .din_i         ( din                ),
   .pc_ser_o      ( pc_ser             ), 
   .pc_ser_inc_o  ( pc_ser_inc         ),
@@ -101,8 +106,6 @@ always_comb begin
   if (inc) assume(shift);
   // Assume normal pc increment
   if (inc) assume(din == pc_ser_inc);
-  // Loading PC, assume data != 0 for easier debugging
-  if (shift & ~inc) assume(din != 'b0);
 end
 
 
@@ -152,18 +155,22 @@ end
 
 always_ff @(posedge clk_i) begin
   cover (rst_in);
-  cover (rst_in & (pc == BOOTADR));
-  cover (fv_cycle_check);
-  cover (fv_cycle_check && $past(inc));
-  cover (fv_cycle_check && $past(shift));
-  cover (fv_cycle_check & (~inc & ~shift));
-  cover (fv_cycle_check & (inc != $past(inc)));
+  cover (rst_in && (pc == BOOTADR));
+  cover (rst_in && fv_cycle_check);
+  cover (rst_in && fv_cycle_check && $past(inc));
+  cover (rst_in && fv_cycle_check && $past(shift));
 
+  cover (rst_in && fv_cycle_check & (inc != $past(inc)));
+  cover (rst_in && fv_cycle_check && (fv_pcinc == 32'h0000_00F3) && $past(inc));
+  cover (rst_in && fv_cycle_check && (fv_pcinc == 32'h0000_FF03) && $past(inc));
+  cover (rst_in && fv_cycle_check && (fv_pcinc == 32'hFFFF_FFF3) && $past(inc));
+  cover (rst_in && fv_cycle_check && (fv_pcinc == 32'h0000_FF03) && $past(inc));
+  cover (rst_in && fv_cycle_check && (fv_pcinc == 32'hFFFF_FFF3) && $past(inc));
   //
-  cover ($past(shift) & $past(inc) & (pc == fv_prev_pc + 'd4));
-  cover ($past(shift) & $past(inc) & (pc == fv_pcinc));
-  cover ($past(shift) & (pc == fv_din));
-  cover ($past(shift) & (fv_prev_pc == fv_pcser));
+  cover (rst_in && fv_cycle_check && $past(shift) && $past(inc) && (pc == fv_prev_pc + 'd4));
+  cover (rst_in && fv_cycle_check && $past(shift) && $past(inc) && (pc == fv_pcinc));
+  cover (rst_in && fv_cycle_check && $past(shift) && (pc == fv_din));
+  cover (rst_in && fv_cycle_check && $past(shift) && (fv_prev_pc == fv_pcser));
 end
 
 endmodule
