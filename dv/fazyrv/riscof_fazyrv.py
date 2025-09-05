@@ -60,33 +60,40 @@ class fazyrv(pluginTemplate):
             self.target_run = True
 
     def initialise(self, suite, work_dir, archtest_env):
+      # capture the working directory. Any artifacts that the DUT creates should be placed in this
+      # directory. Other artifacts from the framework and the Reference plugin will also be placed
+      # here itself.
+      self.work_dir = work_dir
 
-       # capture the working directory. Any artifacts that the DUT creates should be placed in this
-       # directory. Other artifacts from the framework and the Reference plugin will also be placed
-       # here itself.
-       self.work_dir = work_dir
+      # capture the architectural test-suite directory.
+      self.suite_dir = suite
 
-       # capture the architectural test-suite directory.
-       self.suite_dir = suite
+      # Note the march is not hardwired here, because it will change for each
+      # test. Similarly the output elf name and compile macros will be assigned later in the
+      # runTests function
+      self.compile_cmd = 'riscv{1}-unknown-elf-gcc -march={0} \
+        -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -g\
+        -T '+self.pluginpath+'/env/link.ld\
+        -I '+self.pluginpath+'/env/\
+        -I ' + archtest_env + ' {2} -o {3} {4}'
 
-       # Note the march is not hardwired here, because it will change for each
-       # test. Similarly the output elf name and compile macros will be assigned later in the
-       # runTests function
-       self.compile_cmd = 'riscv{1}-unknown-elf-gcc -march={0} \
-         -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -g\
-         -T '+self.pluginpath+'/env/link.ld\
-         -I '+self.pluginpath+'/env/\
-         -I ' + archtest_env + ' {2} -o {3} {4}'
+      chunksize = os.environ.get('RISCOF_CHUNKSIZE')
+      conf = os.environ.get('RISCOF_CONF')
+      rftype = os.environ.get('RISCOF_RFTYPE')
+      
+      assert chunksize is not None, "CHUNKSIZE is not set"
+      assert conf is not None, "CONF is not set" 
+      assert rftype is not None, "RFTYPE is not set" 
 
-       # add more utility snippets here
-       build_fazyrv = 'fusesoc run --target=verilator_tb --build --work-root=work_simfsoc \
-        fsoc --MEMSIZE=8388608 --CHUNKSIZE={} --CONF={} --RFTYPE={} --BOOTADR={} --DEBUG=1 --SIM=1 --SIGNATURE=1'.format(
-          os.environ.get('RISCOF_BWIDTH', 8),
-          os.environ.get('RISCOF_CONF', "MIN"),
-          os.environ.get('RISCOF_RFTYPE', "BRAM"),
-          0
-        )
-       utils.shellCommand(build_fazyrv).run()
+      # add more utility snippets here
+      build_fazyrv = 'fusesoc run --target=verilator_tb --build --work-root=work_simfsoc \
+      fsoc --MEMSIZE=8388608 --CHUNKSIZE={} --CONF={} --RFTYPE={} --BOOTADR={} --DEBUG=1 --SIM=1 --SIGNATURE=1'.format(
+        chunksize,
+        conf,
+        rftype,
+        0
+      )
+      utils.shellCommand(build_fazyrv).run()
 
     def build(self, isa_yaml, platform_yaml):
 

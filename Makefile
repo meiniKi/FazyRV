@@ -162,11 +162,9 @@ riscof.run.%: $(SRC_DESIGN) $(SRC_SYNTH)
 	@echo "RF: $(RF)"
 	mkdir -p $(WORK_DIR_RISCOF)
 	mkdir -p $(SUMMARY_DIR_RISCOF)
-	export RISCOF_CHUNKSIZE=$(CHUNKSIZE)
-	export RISCOF_CONF=$(CONF)
-	export RISCOF_RFTYPE=$(RF)
 	riscof testlist --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env
-	riscof run --no-browser --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/tmp.txt
+	RISCOF_CHUNKSIZE=$(CHUNKSIZE) RISCOF_CONF=$(CONF) RISCOF_RFTYPE=$(RF) \
+		riscof run --no-browser --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/tmp.txt
 	@ ! grep -q -e "Failed" -e "ERROR" $(SUMMARY_DIR_RISCOF)/tmp.txt
 	@echo $$? > $(SUMMARY_DIR_RISCOF)/$*.log
 	@rm $(SUMMARY_DIR_RISCOF)/tmp.txt
