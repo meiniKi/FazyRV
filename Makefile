@@ -162,11 +162,9 @@ riscof.run.%: $(SRC_DESIGN) $(SRC_SYNTH)
 	@echo "RF: $(RF)"
 	mkdir -p $(WORK_DIR_RISCOF)
 	mkdir -p $(SUMMARY_DIR_RISCOF)
-	export RISCOF_CHUNKSIZE=$(CHUNKSIZE)
-	export RISCOF_CONF=$(CONF)
-	export RISCOF_RFTYPE=$(RF)
 	riscof testlist --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env
-	riscof run --no-browser --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/tmp.txt
+	RISCOF_CHUNKSIZE=$(CHUNKSIZE) RISCOF_CONF=$(CONF) RISCOF_RFTYPE=$(RF) \
+		riscof run --no-browser --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/tmp.txt
 	@ ! grep -q -e "Failed" -e "ERROR" $(SUMMARY_DIR_RISCOF)/tmp.txt
 	@echo $$? > $(SUMMARY_DIR_RISCOF)/$*.log
 	@rm $(SUMMARY_DIR_RISCOF)/tmp.txt
@@ -230,21 +228,21 @@ fv.rvformal.cov.insn.%: _fv.rvformal.prepare
 
 # param: <CHUNKSIZE>
 fv.rvformal.cov.reg.%: _fv.rvformal.prepare
-	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $*/' riscv-formal/cores/fazyrv/checks_cov_insn.cfg
-	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $*)/" riscv-formal/cores/fazyrv/checks_cov_insn.cfg
-	cd riscv-formal/cores/fazyrv && $(PYTHON) ../../checks/genchecks.py checks_cov_insn
-	$(MAKE) -C riscv-formal/cores/fazyrv/checks_cov_insn
-	cd riscv-formal/cores/fazyrv && ./stats.sh checks_cov_insn
+	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $*/' riscv-formal/cores/fazyrv/checks_cov_reg.cfg
+	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $*)/" riscv-formal/cores/fazyrv/checks_cov_reg.cfg
+	cd riscv-formal/cores/fazyrv && $(PYTHON) ../../checks/genchecks.py checks_cov_reg
+	$(MAKE) -C riscv-formal/cores/fazyrv/checks_cov_reg
+	cd riscv-formal/cores/fazyrv && ./stats.sh checks_cov_reg
 	cd riscv-formal/cores/fazyrv && rm -vrf checks
 
 
-fv.rvformal.bmc.insn.all: $(addprefix fv.rvformal.bmc.insn.%, $(RVF_CHUNKSIZES))
+fv.rvformal.bmc.insn.all: $(addprefix fv.rvformal.bmc.insn., $(RVF_CHUNKSIZES))
 
-fv.rvformal.bmc.reg.all: $(addprefix fv.rvformal.bmc.reg.%, $(RVF_CHUNKSIZES))
+fv.rvformal.bmc.reg.all: $(addprefix fv.rvformal.bmc.reg., $(RVF_CHUNKSIZES))
 
-fv.rvformal.cov.insn.all: $(addprefix fv.rvformal.cov.insn.%, $(RVF_CHUNKSIZES))
+fv.rvformal.cov.insn.all: $(addprefix fv.rvformal.cov.insn., $(RVF_CHUNKSIZES))
 
-fv.rvformal.cov.reg.all: $(addprefix fv.rvformal.cov.reg.%, $(RVF_CHUNKSIZES))
+fv.rvformal.cov.reg.all: $(addprefix fv.rvformal.cov.reg., $(RVF_CHUNKSIZES))
 
 ################
 # Embench 
