@@ -31,7 +31,11 @@ logic [31:0] ram_r [0:DEPTH-1];
 
 always_ff @(posedge clk_i) begin
   if (~we_i) begin
-    rdata_o <= ram_r[raddr_i];
+    if (raddr_i == 'b0) begin
+      rdata_o <= 'b0;
+    end else begin
+      rdata_o <= ram_r[raddr_i];
+    end
   end else if (we_i) begin
     ram_r[waddr_i] <= wdata_i;
   end
