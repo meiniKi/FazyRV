@@ -256,16 +256,16 @@ Please cite the work as follows:
 
 ```
 @inproceedings{fazyrv2024kissich,
-  title = {{FazyRV: Closing the Gap between 32-Bit and Bit-Serial RISC-V Cores with a Scalable Implementation}},
+  title     = {{FazyRV: Closing the Gap between 32-Bit and Bit-Serial RISC-V Cores with a Scalable Implementation}},
   booktitle = {Proc. of the 21st ACM International Conference on Computing Frontiers (CF ’24)},
-  author = {Kissich, Meinhard and Baunach, Marcel},
-  year = {2024},
-  month = {May},
+  author    = {Kissich, Meinhard and Baunach, Marcel},
+  year      = {2024},
+  month     = {May},
   publisher = {Association for Computing Machinery},
-  url = {https://doi.org/10.1145/3649153.3649195},
-  doi = {10.1145/3649153.3649195},
+  url       = {https://doi.org/10.1145/3649153.3649195},
+  doi       = {10.1145/3649153.3649195},
   booktitle = {Proceedings of the 21st ACM International Conference on Computing Frontiers},
-  pages = {240–248}
+  pages     = {240–248}
 }
 ```
 
@@ -277,7 +277,9 @@ Please cite the work as follows:
 
 * YosysHQ invited us to contribute a blog post. Check out [our FazyRV community-spotlight blog post](https://blog.yosyshq.com/p/community-spotlight-fazyrv) and all the [amazing open-source projects](https://blog.yosyshq.com).
 
+* [heichips25-fazyrv-exotiny](https://github.com/meiniKi/heichips25-fazyrv-exotiny) implements a FazyRV-based SoC as part of the [HeiChips 2025 Tapeout](https://github.com/FPGA-Research/heichips25-tapeout).
 
+* [gf180mcu FazyRV Hachure SoC](https://github.com/meiniKi/gf180mcu-fazyrv-hachure) integrates several FazyRV instances.
 
 
 ## TODOs
