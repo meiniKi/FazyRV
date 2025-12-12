@@ -1,8 +1,8 @@
-// Copyright (c) 2023 - 2024 Meinhard Kissich
+// Copyright (c) 2023 - 2025 Meinhard Kissich
 // SPDX-License-Identifier: MIT
 // -----------------------------------------------------------------------------
 // File  :  fazyrv_spm_a.v
-// Usage :  Scratchpad memory for addresses.
+// Usage :  Parallelize addresses for memory accesses.
 //
 // Param
 //  - CHUNKSIZE   Data path width of the core.
