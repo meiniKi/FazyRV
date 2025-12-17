@@ -126,16 +126,18 @@ ARCH        := ice40 | ecp5 | gowin | xilinx | gatemate
 
 ```shell
 # run the flow only
-make _impl.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
+make impl.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
 
 # run the flow and report a summary of the results
-make _report.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
+make report.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
 
 # e.g.,
-make _report.soc.ice40-8-MIN-BRAM
+make report.soc.ice40-8-MIN-BRAM
 
-# or 
-make report.soc.all
+# Make a markdown summary of all configurations
+# given an architecture
+# pip install -r requirements.txt
+TARGET_ARCH=ice40 make summary.soc.all
 ```
 
 ### Litex
@@ -281,19 +283,6 @@ Please cite the work as follows:
 
 * [gf180mcu FazyRV Hachure SoC](https://github.com/meiniKi/gf180mcu-fazyrv-hachure) integrates several FazyRV instances.
 
-
-## TODOs
-
-- [ ] Workflow: caching, tool versions, artifacts, dependence on some local tools
-- [ ] RVC extension (compressed instructions)
-- [ ] INT variant
-- [ ] CSR variant
-- [ ] CSR instructions in addition to `csrrw`(?)
-- [ ] Use edalize reporting instead of custom scripts
-- [ ] Optimization
-- [ ] More documentation
-
-Please feel free to discuss and open an issue and/or pull request.
 
 ## Licensing
 

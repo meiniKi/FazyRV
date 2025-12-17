@@ -68,6 +68,16 @@ targets:
           - "-Wno-CASEOVERLAP"
     toplevel: fazyrv_top
 
+  ice40_ref:
+    default_tool: icestorm
+    description: Reference implementation for iCE40 to track the area of FazyRV
+    filesets: [core]
+    parameters: [CHUNKSIZE, CONF, RFTYPE, BOOTADR=0]
+    tools:
+      icestorm:
+        nextpnr_options: [--hx8k, --package, ct256, --freq, 10]
+        pnr: next
+    toplevel: fazyrv_top
 
 parameters:
   CHUNKSIZE:

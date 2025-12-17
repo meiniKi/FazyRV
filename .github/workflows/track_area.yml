@@ -1,6 +1,9 @@
 name: Track area demand in readme
 
-on: [pull_request]
+on:
+  push:
+    branches:
+      - dev
 
 jobs:
   evaluate:
@@ -34,7 +37,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run implementation
-        run: make track.sizes.synth COMMIT=$(git rev-parse --short "$GITHUB_SHA")
+        run: make track.sizes COMMIT=$(git rev-parse --short "$GITHUB_SHA")
 
       - name: Plot artifact
         uses: actions/upload-artifact@v4

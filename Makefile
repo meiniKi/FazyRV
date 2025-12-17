@@ -1,29 +1,25 @@
 
 CUR_DIR := $(shell pwd)
 SCRIPT := $(CUR_DIR)/script
-WORKFLOW_SCRIPT := $(SCRIPT)/workflow
 
 YOSYS := yosys
 SVLINT := svlint
 SLANG := slang
-PYTHON := python3
+PYTHON := python
 MAKE := make
 BASH := bash
 VERILATOR := verilator
 
-NEXTPNR_ICE40 := nextpnr-ice40
-NEXTPNR_ECP5 := nextpnr-ecp5
-GATEMATE_PR := p_r
-
 TARGET_ARCH ?= ice40
+COMMIT ?= n/a
 
 ################################
 # Synthesis combinations 
 #
 
 SYNTH_CHUNKSIZES 	:= 1 2 4 8
-SYNTH_CONFS 		:= MIN INT
-SYNTH_RF 			:= BRAM BRAM_BP BRAM_DP BRAM_DP_BP
+SYNTH_CONFS 		:= MIN
+SYNTH_RF 			:= LOGIC BRAM BRAM_BP BRAM_DP BRAM_DP_BP
 
 # Synth param:  <CHUNKSIZE>-<CONF>-<RFTYPE>
 SYNTH_PARAMS := $(foreach bdwidth,$(SYNTH_CHUNKSIZES),\
@@ -80,10 +76,8 @@ TOP_MODULE_TOP := fazyrv_top
 
 WORK_DIR_MAIN		:= work
 
-WORK_DIR_TOP		:= $(WORK_DIR_MAIN)/work_top
 WORK_DIR_CORE		:= $(WORK_DIR_MAIN)/work_core
 WORK_DIR_SOC		:= $(WORK_DIR_MAIN)/work_soc
-WORK_DIR_EMBENCH	:= $(WORK_DIR_MAIN)/work_rvtests
 WORK_DIR_RISCOF		:= $(WORK_DIR_MAIN)/work_riscof
 
 SUMMARY_DIR_SOC			:= $(WORK_DIR_MAIN)/summary_fsoc_soc
@@ -138,7 +132,7 @@ sim.riscvtests.%: $(SRC_DESIGN) $(SRC_SYNTH)
 
 report.riscvtests.all: $(addprefix sim.riscvtests., $(RVTESTS_PARAMS))
 	@echo "${BLUE}Generating riscvtests table for all combinations${RESET}"
-	$(WORKFLOW_SCRIPT)/rvtests_table.sh $(SUMMARY_DIR_RISCVTESTS)
+	$(SCRIPT)/rvtests_table.sh $(SUMMARY_DIR_RISCVTESTS)
 
 
 ################
@@ -266,8 +260,7 @@ embench.run: embench.prepare
 #
 
 # param: <ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
-# Via fusesoc whenever possible.
-_impl.soc.%: $(SRC_DESIGN) $(SRC_SYNTH)
+impl.soc.%:
 	@echo "${BLUE}Synthesizing for $*...${RESET}"
 	$(eval ARCH=$(word 1,$(subst -, ,$*)))
 	$(eval CHUNKSIZE=$(word 2,$(subst -, ,$*)))
@@ -277,70 +270,37 @@ _impl.soc.%: $(SRC_DESIGN) $(SRC_SYNTH)
 	@echo "ARCH: $(ARCH)"
 	@echo "CONF: $(CONF)"
 	@echo "RF: $(RF)"
-	mkdir -p $(WORK_DIR_SOC)/$*
-	@case ${ARCH} in \
-		gatemate) $(YOSYS) -l $(WORK_DIR_SOC)/$*/yosys_$*.log -p "read_verilog -sv -defer $^; chparam -set CHUNKSIZE $(CHUNKSIZE) $(TOP_MODULE_SOC); chparam -set GPOCNT 1 $(TOP_MODULE_SOC); chparam -set MEMDLY1 0 $(TOP_MODULE_SOC); chparam -set CONF \"$(CONF)\" $(TOP_MODULE_SOC); chparam -set RFTYPE \"$(RF)\" $(TOP_MODULE_SOC); synth_$(ARCH) -top $(TOP_MODULE_SOC); synth_$(ARCH) -top $(TOP_MODULE_SOC) -json $(WORK_DIR_SOC)/$*/$*.json -vlog $(WORK_DIR_SOC)/$*/$*.v" && \
-					$(GATEMATE_PR) --speed 10 -tm 2 -ccf soc/synth/gatemate_ref.ccf -i $(WORK_DIR_SOC)/$*/$*.v > $(WORK_DIR_SOC)/$*/gm_pr_$*.log ;; \
-		*) fusesoc run --target=$(ARCH)_ref --build --work-root=$(WORK_DIR_SOC)/$* fsoc --CHUNKSIZE=$(CHUNKSIZE) --CONF=$(CONF) --RFTYPE=$(RF) ;; \
-	esac
+	fusesoc run --target=$(ARCH)_ref --build --work-root=$(WORK_DIR_SOC)/$* fsoc --CHUNKSIZE=$(CHUNKSIZE) --CONF=$(CONF) --RFTYPE=$(RF)
 
 # param: <ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
-# TODO: Use Edalize reporting instead of custom scripts
-_report.soc.%: _impl.soc.%
+report.soc.%: impl.soc.%
 	@echo -e "${GREEN}Report for $*...${RESET}"
 	$(eval ARCH=$(word 1,$(subst -, ,$*)))
-	mkdir -p $(SUMMARY_DIR_SOC)
-	@case ${ARCH} in \
-		xilinx) \
-			$(WORKFLOW_SCRIPT)/report_vivado_util.sh $(WORK_DIR_SOC)/$*/*.runs/impl_1/fsoc_utilization_placed.rpt > $(SUMMARY_DIR_SOC)/summary_util_$*; \
-			$(WORKFLOW_SCRIPT)/report_vivado_timing.sh $(WORK_DIR_SOC)/$*/*.runs/impl_1/fsoc_timing_summary_routed.rpt > $(SUMMARY_DIR_SOC)/summary_wns_$*; \
-			$(WORKFLOW_SCRIPT)/report_vivado_timing_to_fmax.sh $(SUMMARY_DIR_SOC) 100 \
-			;; \
-		gatemate) \
-			$(WORKFLOW_SCRIPT)/report_gatemate_util.sh $(WORK_DIR_SOC)/$*/gm_pr_$*.log > $(SUMMARY_DIR_SOC)/summary_util_$*; \
-			$(WORKFLOW_SCRIPT)/report_gatemate_timing.sh $(WORK_DIR_SOC)/$*/gm_pr_$*.log  > $(SUMMARY_DIR_SOC)/summary_fmax_$*; \
-			;; \
-		*) \
-			$(WORKFLOW_SCRIPT)/report_yosys_$(ARCH).sh $(WORK_DIR_SOC)/$*/yosys.log > $(SUMMARY_DIR_SOC)/summary_yosys_$*; \
-			$(WORKFLOW_SCRIPT)/report_nextpnr_timing.sh $(WORK_DIR_SOC)/$*/next.log > $(SUMMARY_DIR_SOC)/summary_fmax_$*; \
-			$(WORKFLOW_SCRIPT)/report_nextpnr_util.sh $(WORK_DIR_SOC)/$*/next.log > $(SUMMARY_DIR_SOC)/summary_util_$*; \
-			;; \
-	esac
+	$(PYTHON) $(SCRIPT)/reporting.py $(ARCH) $(WORK_DIR_SOC)/$* -o $(SUMMARY_DIR_SOC)/$*.json
 
 # param: set TARGET_ARCH
-report.soc.all: $(addprefix _report.soc.$(TARGET_ARCH)-, $(SYNTH_PARAMS))
-	$(PYTHON) $(WORKFLOW_SCRIPT)/summary_table.py $(SUMMARY_DIR_SOC) $(TARGET_ARCH)
+summary.soc.all: $(addprefix report.soc.$(TARGET_ARCH)-, $(SYNTH_PARAMS))
+	$(PYTHON) $(SCRIPT)/summary.py $(SUMMARY_DIR_SOC) -o $(WORK_DIR_MAIN)/soc_$(TARGET_ARCH).md
 
-report.md:
-	$(PYTHON) $(WORKFLOW_SCRIPT)/summary_table_md.py $(SUMMARY_DIR_SOC) $(TARGET_ARCH)
 
 #######################
 # Track and plot sizes
 #
 
 # param: <ARCH>-<CHUNKSIZE>-<CONF>-<RF>
-_track.sizes.synth.%: $(SRC_DESIGN) $(SRC_SYNTH)
+_track.sizes.impl.%:
 	@echo -e "${BLUE}Synthesizing for $*...${RESET}"
 	$(eval ARCH=$(word 1,$(subst -, ,$*)))
 	$(eval CHUNKSIZE=$(word 2,$(subst -, ,$*)))
 	$(eval CONF=$(word 3,$(subst -, ,$*)))
 	$(eval RF=$(word 4,$(subst -, ,$*)))
-	@echo "CHUNKSIZE: $(CHUNKSIZE)"
-	@echo "ARCH: $(ARCH)"
-	@echo "CONF: $(CONF)"
-	@echo "RF: $(RF)"
-	mkdir -p $(WORK_DIR_CORE)/$*
-	mkdir -p $(WORK_DIR_SOC)/$*
-	$(YOSYS) -q -l $(WORK_DIR_CORE)/$*/yosys_$*.log -p "read_verilog -sv -defer $^; chparam -set CHUNKSIZE $(CHUNKSIZE) $(TOP_MODULE_CORE); chparam -set CONF \"$(CONF)\" $(TOP_MODULE_CORE); chparam -set RFTYPE \"$(RF)\" $(TOP_MODULE_CORE); synth_$(ARCH) -top $(TOP_MODULE_CORE)"
-	$(YOSYS) -q -l $(WORK_DIR_SOC)/$*/yosys_$*.log -p "read_verilog -sv -defer $^; chparam -set CHUNKSIZE $(CHUNKSIZE) $(TOP_MODULE_SOC); chparam -set CONF \"$(CONF)\" $(TOP_MODULE_SOC); chparam -set RFTYPE \"$(RF)\" $(TOP_MODULE_SOC); synth_$(ARCH) -top $(TOP_MODULE_SOC)"
-	mkdir -p $(SUMMARY_DIR_CORE)
-	mkdir -p $(SUMMARY_DIR_SOC)
-	$(WORKFLOW_SCRIPT)/report_yosys_$(ARCH).sh $(WORK_DIR_CORE)/$*/yosys_$*.log > $(SUMMARY_DIR_CORE)/summary_yosys_$*
-	$(WORKFLOW_SCRIPT)/report_yosys_$(ARCH).sh $(WORK_DIR_SOC)/$*/yosys_$*.log > $(SUMMARY_DIR_SOC)/summary_yosys_$*
+	fusesoc run --target=$(ARCH)_ref --build --work-root=$(WORK_DIR_CORE)/$* fazyrv --CHUNKSIZE=$(CHUNKSIZE) --CONF=$(CONF) --RFTYPE=$(RF)
+	$(PYTHON) $(SCRIPT)/reporting.py $(ARCH) $(WORK_DIR_CORE)/$* -o $(SUMMARY_DIR_CORE)/$*.json
+	$(PYTHON) $(SCRIPT)/summary.py $(SUMMARY_DIR_CORE) -o $(SUMMARY_DIR_CORE)/core_ice40.md
+	make report.soc.$(ARCH)-$(CHUNKSIZE)-$(CONF)-$(RF)	
 
-
-track.sizes.synth: $(addprefix _track.sizes.synth.$(TARGET_ARCH)-, $(PLOT_PARAMS))
-	$(PYTHON) $(WORKFLOW_SCRIPT)/plot_track_sizes.py $(SUMMARY_DIR_CORE) $(SUMMARY_DIR_SOC) ./doc/area.svg ./doc/area.txt $(COMMIT)
+track.sizes: $(addprefix _track.sizes.impl.ice40-, $(PLOT_PARAMS))
+	$(PYTHON) $(SCRIPT)/plot_track_sizes.py ice40 $(SUMMARY_DIR_CORE) $(SUMMARY_DIR_SOC) --svg ./doc/area.svg --ascii ./doc/area.txt --commit_hash $(COMMIT)
 
 clean:
 	rm -vrf $(WORK_DIR_MAIN)

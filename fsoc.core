@@ -1,5 +1,5 @@
 CAPI=2:
-name: ::fsoc:0.1.0
+name: ::fsoc:0.1.1
 description: A minimal SoC using the FazyRV core
 
 filesets:
@@ -108,14 +108,14 @@ targets:
     toplevel: fsoc
     
   gatemate_ref:
-    default_tool: gatemate
+    default_tool: peppercorn
     description: Reference implementation for GateMate to track the area of FazyRV
     filesets: [soc, gatemate_ref]
     parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE]
     tools:
-      gatemate:
+      peppercorn:
         device: CCGM1A1
-        p_r_options: [--speed, "10", -tm, "2"]
+        nextpnr_options: [--router, router2, --freq, 10]
     toplevel: fsoc
 
   xilinx_ref:
