@@ -13,11 +13,7 @@ module wb_ram #(parameter DEPTH=128, parameter MEMFILE="")
 
 );
 
-`ifdef GOWIN
-logic [31:0] mem_r [0:DEPTH-1];
-`else
 (* ram_style = "block" *) logic [31:0] mem_r [0:DEPTH-1];
-`endif
 
 logic read_enable;
 logic write_enable;

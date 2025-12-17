@@ -1,9 +1,6 @@
 name: Track area demand in readme
 
-on:
-  push:
-    branches:
-      - dev
+on: [pull_request]
 
 jobs:
   evaluate:
