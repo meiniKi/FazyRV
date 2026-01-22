@@ -23,12 +23,15 @@ jobs:
       - name: pip packages
         run: pip3 install -r requirements.txt
 
-      - name: fusesoc library and run implementation
+      - name: fusesoc library
         run: |
           fusesoc library add fazyrv .
           fusesoc library add fsoc .
-          make report.soc.all TARGET_ARCH=ice40
-          make report.md TARGET_ARCH=ice40 >> $GITHUB_STEP_SUMMARY
+
+      - name: Run implementation
+        run: |
+          make summary.soc.all TARGET_ARCH=ice40
+          cat work/soc_ice40.md >> $GITHUB_STEP_SUMMARY
 
   impl_ecp5:
     name: ECP5 Reference Implementation
@@ -50,10 +53,12 @@ jobs:
       - name: pip packages
         run: pip3 install -r requirements.txt
 
-      - name: fusesoc library and run implementation
+      - name: fusesoc library
         run: |
           fusesoc library add fazyrv .
           fusesoc library add fsoc .
-          make report.soc.all TARGET_ARCH=ecp5
-          make report.md TARGET_ARCH=ecp5 >> $GITHUB_STEP_SUMMARY
 
+      - name: Run implementation
+        run: |
+          make summary.soc.all TARGET_ARCH=ecp5
+          cat work/soc_ecp5.md >> $GITHUB_STEP_SUMMARY
