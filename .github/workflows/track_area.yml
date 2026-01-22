@@ -28,13 +28,13 @@ jobs:
       - name: pip packages
         run: pip install -r requirements.txt
 
+      - name: Actions checkout
+        uses: actions/checkout@v3
+
       - name: fusesoc library
         run: |
           fusesoc library add fazyrv .
           fusesoc library add fsoc .
-
-      - name: Actions checkout
-        uses: actions/checkout@v3
 
       - name: Run implementation
         run: make track.sizes COMMIT=$(git rev-parse --short "$GITHUB_SHA")
