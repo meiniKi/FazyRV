@@ -126,16 +126,18 @@ ARCH        := ice40 | ecp5 | gowin | xilinx | gatemate
 
 ```shell
 # run the flow only
-make _impl.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
+make impl.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
 
 # run the flow and report a summary of the results
-make _report.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
+make report.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
 
 # e.g.,
-make _report.soc.ice40-8-MIN-BRAM
+make report.soc.ice40-8-MIN-BRAM
 
-# or 
-make report.soc.all
+# Make a markdown summary of all configurations
+# given an architecture
+# pip install -r requirements.txt
+TARGET_ARCH=ice40 make summary.soc.all
 ```
 
 ### Litex
@@ -256,16 +258,16 @@ Please cite the work as follows:
 
 ```
 @inproceedings{fazyrv2024kissich,
-  title = {{FazyRV: Closing the Gap between 32-Bit and Bit-Serial RISC-V Cores with a Scalable Implementation}},
+  title     = {{FazyRV: Closing the Gap between 32-Bit and Bit-Serial RISC-V Cores with a Scalable Implementation}},
   booktitle = {Proc. of the 21st ACM International Conference on Computing Frontiers (CF ’24)},
-  author = {Kissich, Meinhard and Baunach, Marcel},
-  year = {2024},
-  month = {May},
+  author    = {Kissich, Meinhard and Baunach, Marcel},
+  year      = {2024},
+  month     = {May},
   publisher = {Association for Computing Machinery},
-  url = {https://doi.org/10.1145/3649153.3649195},
-  doi = {10.1145/3649153.3649195},
+  url       = {https://doi.org/10.1145/3649153.3649195},
+  doi       = {10.1145/3649153.3649195},
   booktitle = {Proceedings of the 21st ACM International Conference on Computing Frontiers},
-  pages = {240–248}
+  pages     = {240–248}
 }
 ```
 
@@ -277,21 +279,10 @@ Please cite the work as follows:
 
 * YosysHQ invited us to contribute a blog post. Check out [our FazyRV community-spotlight blog post](https://blog.yosyshq.com/p/community-spotlight-fazyrv) and all the [amazing open-source projects](https://blog.yosyshq.com).
 
+* [heichips25-fazyrv-exotiny](https://github.com/meiniKi/heichips25-fazyrv-exotiny) implements a FazyRV-based SoC as part of the [HeiChips 2025 Tapeout](https://github.com/FPGA-Research/heichips25-tapeout).
 
+* [gf180mcu FazyRV Hachure SoC](https://github.com/meiniKi/gf180mcu-fazyrv-hachure) integrates several FazyRV instances.
 
-
-## TODOs
-
-- [ ] Workflow: caching, tool versions, artifacts, dependence on some local tools
-- [ ] RVC extension (compressed instructions)
-- [ ] INT variant
-- [ ] CSR variant
-- [ ] CSR instructions in addition to `csrrw`(?)
-- [ ] Use edalize reporting instead of custom scripts
-- [ ] Optimization
-- [ ] More documentation
-
-Please feel free to discuss and open an issue and/or pull request.
 
 ## Licensing
 

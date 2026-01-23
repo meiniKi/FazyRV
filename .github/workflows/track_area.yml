@@ -22,22 +22,22 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
           cache: 'pip'
 
       - name: pip packages
         run: pip install -r requirements.txt
+
+      - name: Actions checkout
+        uses: actions/checkout@v3
 
       - name: fusesoc library
         run: |
           fusesoc library add fazyrv .
           fusesoc library add fsoc .
 
-      - name: Actions checkout
-        uses: actions/checkout@v3
-
       - name: Run implementation
-        run: make track.sizes.synth COMMIT=$(git rev-parse --short "$GITHUB_SHA")
+        run: make track.sizes COMMIT=$(git rev-parse --short "$GITHUB_SHA")
 
       - name: Plot artifact
         uses: actions/upload-artifact@v4

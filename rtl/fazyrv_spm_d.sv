@@ -1,8 +1,9 @@
-// Copyright (c) 2023 - 2024 Meinhard Kissich
+// Copyright (c) 2023 - 2025 Meinhard Kissich
 // SPDX-License-Identifier: MIT
 // -----------------------------------------------------------------------------
 // File  :  fazyrv_spm_d.sv
-// Usage :  Scratchpad memory for data.
+// Usage :  Serializes loaded data from memory, parallelizes data to be stored,
+//          and manages shifting.
 //
 // Param
 //  - CHUNKSIZE   Data path width of the core.
