@@ -193,7 +193,8 @@ _fv.rvformal.prepare:
 
 
 # param: <CHUNKSIZE>
-fv.rvformal.bmc.insn.%: _fv.rvformal.prepare
+fv.rvformal.bmc.insn.%:
+	make _fv.rvformal.prepare
 	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $*/' riscv-formal/cores/fazyrv/checks_bmc_insn.cfg
 	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $*)/" riscv-formal/cores/fazyrv/checks_bmc_insn.cfg
 	cd riscv-formal/cores/fazyrv && $(PYTHON) ../../checks/genchecks.py checks_bmc_insn
@@ -202,7 +203,8 @@ fv.rvformal.bmc.insn.%: _fv.rvformal.prepare
 	cd riscv-formal/cores/fazyrv && rm -vrf checks
 
 # param: <CHUNKSIZE>
-fv.rvformal.bmc.reg.%: _fv.rvformal.prepare
+fv.rvformal.bmc.reg.%:
+	make _fv.rvformal.prepare
 	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $*/' riscv-formal/cores/fazyrv/checks_bmc_reg.cfg
 	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $*)/" riscv-formal/cores/fazyrv/checks_bmc_reg.cfg
 	cd riscv-formal/cores/fazyrv && $(PYTHON) ../../checks/genchecks.py checks_bmc_reg
@@ -211,7 +213,8 @@ fv.rvformal.bmc.reg.%: _fv.rvformal.prepare
 	cd riscv-formal/cores/fazyrv && rm -vrf checks
 
 # param: <CHUNKSIZE>
-fv.rvformal.cov.insn.%: _fv.rvformal.prepare
+fv.rvformal.cov.insn.%:
+	make _fv.rvformal.prepare
 	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $*/' riscv-formal/cores/fazyrv/checks_cov_insn.cfg
 	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $*)/" riscv-formal/cores/fazyrv/checks_cov_insn.cfg
 	cd riscv-formal/cores/fazyrv && $(PYTHON) ../../checks/genchecks.py checks_cov_insn
@@ -220,7 +223,8 @@ fv.rvformal.cov.insn.%: _fv.rvformal.prepare
 	cd riscv-formal/cores/fazyrv && rm -vrf checks
 
 # param: <CHUNKSIZE>
-fv.rvformal.cov.reg.%: _fv.rvformal.prepare
+fv.rvformal.cov.reg.%:
+	make _fv.rvformal.prepare
 	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $*/' riscv-formal/cores/fazyrv/checks_cov_reg.cfg
 	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $*)/" riscv-formal/cores/fazyrv/checks_cov_reg.cfg
 	cd riscv-formal/cores/fazyrv && $(PYTHON) ../../checks/genchecks.py checks_cov_reg
@@ -229,13 +233,13 @@ fv.rvformal.cov.reg.%: _fv.rvformal.prepare
 	cd riscv-formal/cores/fazyrv && rm -vrf checks
 
 
-fv.rvformal.bmc.insn.all: $(addprefix fv.rvformal.bmc.insn., $(RVF_CHUNKSIZES))
+fv.rvformal.all.bmc.insn: $(addprefix fv.rvformal.bmc.insn., $(RVF_CHUNKSIZES))
 
-fv.rvformal.bmc.reg.all: $(addprefix fv.rvformal.bmc.reg., $(RVF_CHUNKSIZES))
+fv.rvformal.all.bmc.reg: $(addprefix fv.rvformal.bmc.reg., $(RVF_CHUNKSIZES))
 
-fv.rvformal.cov.insn.all: $(addprefix fv.rvformal.cov.insn., $(RVF_CHUNKSIZES))
+fv.rvformal.all.cov.insn: $(addprefix fv.rvformal.cov.insn., $(RVF_CHUNKSIZES))
 
-fv.rvformal.cov.reg.all: $(addprefix fv.rvformal.cov.reg., $(RVF_CHUNKSIZES))
+fv.rvformal.all.cov.reg: $(addprefix fv.rvformal.cov.reg., $(RVF_CHUNKSIZES))
 
 ################
 # Embench 

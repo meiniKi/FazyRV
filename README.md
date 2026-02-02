@@ -214,10 +214,10 @@ make fv.rvformal.cov.reg.<CHUNKSIZE>
 make fv.rvformal.bmc.insn.8 && make fv.rvformal.cov.insn.8
 
 # or run them sequentiall on all chunk sizes
-make fv.rvformal.bmc.insn.al
-make fv.rvformal.bmc.reg.all
-make fv.rvformal.cov.insn.all
-make fv.rvformal.cov.reg.all
+make fv.rvformal.all.bmc.insn
+make fv.rvformal.all.bmc.reg
+make fv.rvformal.all.cov.insn
+make fv.rvformal.all.cov.reg
 ```
 
 ## Benchmarks
