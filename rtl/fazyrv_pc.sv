@@ -6,12 +6,14 @@
 //
 // Param
 //  - CHUNKSIZE     Data path width of the core.
+//  - RVC           Compressed instruction support.
 //  - BOOTADR       Initial value of the PC.
 //
 // Ports
 //  - clk_i         Clock input, sensitive to rising edge.
 //  - rst_in        Reset, low active.
 //  - inc_i         Strobe to increment PC in the subsequent cycle.
+//  - is_rvc_i      Compressed instruction flag.
 //  - shift_i       Shift PC register.
 //  - din_i         New input data part when PC is shifted.
 //  - pc_ser_o      Serial output part of PC register.
@@ -19,12 +21,16 @@
 //  - pc_o          Parallel output of PC.
 // -----------------------------------------------------------------------------
 
-module fazyrv_pc #( parameter CHUNKSIZE=2, parameter BOOTADR=32'hFFFF )
-(
+module fazyrv_pc #(
+  parameter CHUNKSIZE = 2,
+  parameter RVC       = "NONE",
+  parameter BOOTADR   = 32'hFFFF
+) (
   input  logic                  clk_i,
   input  logic                  rst_in,
   input  logic                  inc_i,
   input  logic                  shift_i,
+  input  logic                  is_rvc_i,
   input  logic [CHUNKSIZE-1:0]  din_i,
   output logic [CHUNKSIZE-1:0]  pc_ser_o,
   output logic [CHUNKSIZE-1:0]  pc_ser_inc_o,
@@ -90,7 +96,17 @@ generate
   end
 endgenerate
 
-assign add_vec = {{(ADD_VEC_WIDTH-3){1'b0}}, inc_i, 2'b00};
+
+generate
+  // Logically this if/else is not required, but it optimizes better during synthesis
+  /* verilator lint_off WIDTHEXPAND */
+  if (RVC != "NONE") begin
+  /* verilator lint_on WIDTHEXPAND */
+    assign add_vec = {{(ADD_VEC_WIDTH-3){1'b0}}, inc_i & ~is_rvc_i, inc_i & is_rvc_i, 1'b0};
+  end else begin
+    assign add_vec = {{(ADD_VEC_WIDTH-3){1'b0}}, inc_i, 2'b00};
+  end
+endgenerate
 
 assign carry_vec[0] = carry_r[0];
 

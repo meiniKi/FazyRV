@@ -92,6 +92,18 @@ In the default configuration, FazyRV interfaces the memory with a Wishbone inter
 MEMDLY1     := 0 | 1
 ```
 
+FazyRV can be implemented with or without compressed instruction support (RISC-V C extension). By default, the `RVC` parameter is set to `NONE`, and no compressed instruction decoder is instantiated. Alternatively, it can be set to either `COMB`, `REG`, or `HYBR` to support compressed 16-bit instructions. If `RVC` is set to `COMB`, the compressed instructions are combinationally decoded into their uncompressed equivalent. When it is set to `REG`, registers are added after the compressed decoder to break combinational paths. Finally, `HYBR` (experimental) implements a hybrid approach that registers only compressed instructions.
+
+> [!IMPORTANT]
+> `HYBR` is an experimental option that may be dropped in future development.
+
+> [!NOTE]  
+> Note that any support for compressed instructions adds a significant area overhead due to the additional decoder.
+
+```
+RVC         := NONE | COMB | REG | HYBR
+```
+
 > [!IMPORTANT]  
 > Please note that the core still needs to become production-ready. As there is a strong focus on area, the implemented features in the `INT` and `CSR` variants and allowed deviations from the specification must be carefully considered. Also, note that the `LOGIC` variant is explicitly not considered with `INT` and `CSR` variants. 
 

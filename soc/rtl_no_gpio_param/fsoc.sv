@@ -1,9 +1,11 @@
-// Copyright (c) 2023 - 2024 Meinhard Kissich
+// Copyright (c) 2023 - 2026 Meinhard Kissich
+// SPDX-License-Identifier: MIT
 // -----------------------------------------------------------------------------
 // File  :  fsoc.sv
 // Usage :  FazyRV SoC to run the Embench bechmark suite. 
 // Param
 //  - CHUNKSIZE Width of the input vectors.
+//  - RVC       Compressed instruction support.
 //  - CONF      Configuration of the processor (see FazyRV core).
 //  - MTVAL     Initial value of mtval if available (see FazyRV core).
 //  - BOOTADR   Address of first instruction to be fetched (see FazyRV core).
@@ -24,6 +26,7 @@ module fsoc #(
   parameter CHUNKSIZE = 8,
   parameter CONF      = "MIN",
   parameter RFTYPE    = "BRAM",
+  parameter RVC       = "NONE",
   parameter MTVAL     = 'h0,
   parameter BOOTADR   = 'h0,
   parameter MEMFILE   = "",
@@ -146,6 +149,7 @@ endgenerate
 fazyrv_top #( 
   .CHUNKSIZE  ( CHUNKSIZE ),
   .CONF       ( CONF      ),
+  .RVC        ( RVC       ),
   .MTVAL      ( MTVAL     ),
   .BOOTADR    ( BOOTADR   ),
   .RFTYPE     ( RFTYPE    ),

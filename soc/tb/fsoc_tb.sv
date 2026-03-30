@@ -1,4 +1,4 @@
-// Copyright (c) 2023 - 2024 Meinhard Kissich
+// Copyright (c) 2023 - 2026 Meinhard Kissich
 // -----------------------------------------------------------------------------
 // File  :  fsoc_tb.sv
 // Usage :  Testbench for the fsoc SoC.
@@ -10,6 +10,7 @@ module fsoc_tb #(
   parameter MEMFILE   = "",
   parameter MEMSIZE   = 8192,
   parameter CHUNKSIZE = 1,
+  parameter RVC       = "NONE",
   parameter RFTYPE    = "BRAM",
   parameter CONF      = "MIN",
   parameter MTVAL     = 'h0,
@@ -29,6 +30,7 @@ end
 
 fsoc #( 
   .CHUNKSIZE  ( CHUNKSIZE ),
+  .RVC        ( RVC       ),
   .CONF       ( CONF      ),
   .RFTYPE     ( RFTYPE    ),
   .MTVAL      ( MTVAL     ),
