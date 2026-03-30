@@ -1,4 +1,4 @@
-// Copyright (c) 2023 - 2024 Meinhard Kissich
+// Copyright (c) 2023 - 2026 Meinhard Kissich
 // SPDX-License-Identifier: MIT
 // -----------------------------------------------------------------------------
 // File  :  fazyrv_top.sv
@@ -314,5 +314,24 @@ generate
 
   end
 endgenerate
+
+// -----------------------------------------------
+
+// Check parameters
+//
+localparam CHUNKSIZE_OK = (CHUNKSIZE==1) || (CHUNKSIZE==2) ||
+                          (CHUNKSIZE==4) || (CHUNKSIZE==8);
+
+localparam CONF_OK      = (CONF=="MIN") || (CONF=="INT") || (CONF=="CSR");
+
+localparam RFTYPE_OK    = (RFTYPE=="LOGIC")   ||
+                          (RFTYPE=="BRAM")    || (RFTYPE=="BRAM_BP")    || 
+                          (RFTYPE=="BRAM_DP") || (RFTYPE=="BRAM_DP_BP");
+
+localparam MEMDLY1_OK   = (MEMDLY1==0) || (MEMDLY1==1); 
+
+if (!(CHUNKSIZE_OK && CONF_OK && RFTYPE_OK && MEMDLY1_OK)) begin
+  $fatal(1, "At least one of the parameters is not valid.");
+end
 
 endmodule
