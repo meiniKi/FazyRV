@@ -319,6 +319,7 @@ endgenerate
 
 // Check parameters
 //
+/* verilator lint_off WIDTHEXPAND */
 localparam CHUNKSIZE_OK = (CHUNKSIZE==1) || (CHUNKSIZE==2) ||
                           (CHUNKSIZE==4) || (CHUNKSIZE==8);
 
@@ -333,5 +334,6 @@ localparam MEMDLY1_OK   = (MEMDLY1==0) || (MEMDLY1==1);
 if (!(CHUNKSIZE_OK && CONF_OK && RFTYPE_OK && MEMDLY1_OK)) begin
   $fatal(1, "At least one of the parameters is not valid.");
 end
+/* verilator lint_on WIDTHEXPAND */
 
 endmodule
