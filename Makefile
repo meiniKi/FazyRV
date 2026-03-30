@@ -183,7 +183,7 @@ riscof.all: $(addprefix riscof.run., $(RVTESTS_PARAMS))
 #
 
 _fv.rvformal.prepare:
-	if [ ! -d riscv-formal ]; then \
+	@if [ ! -d riscv-formal ]; then \
 		echo "[Error] riscv-formal does not exist. Are submodules initialized?"; \
 		exit 1; \
 	fi
