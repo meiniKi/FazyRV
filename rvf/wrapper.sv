@@ -37,7 +37,7 @@ module rvfi_wrapper (
     .BOOTADR    ( BOOTADR     ),
     .RFTYPE     ( RFTYPE      ),
     .MEMDLY1    ( MEMDLY1     )
-  ) i_fazyr_top (
+  ) i_fazyrv_top (
     .clk_i            ( clock     ),
     .rst_in           ( ~reset    ),
     .tirq_i           ( 1'b0      ),

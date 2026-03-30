@@ -1,4 +1,4 @@
-// Copyright (c) 2023 - 2024 Meinhard Kissich
+// Copyright (c) 2023 - 2026 Meinhard Kissich
 // SPDX-License-Identifier: MIT
 // -----------------------------------------------------------------------------
 // File  :  fazyrv_core.sv
@@ -957,14 +957,14 @@ always_ff @(posedge clk_i) begin
   rvfi_rs2_addr   <= id_rs2 & {5{~id_instr_ld}};
   rvfi_rs2_rdata  <= fv_rb_r & {REG_WIDTH{~id_instr_ld}};
   // rvfi_rd_wdata in top directly from rf;
-
-  logic fv_rf_we;
   
-  if (rvfi_valid | id_instr_any_br | id_instr_st) begin
+  // reg checks require rvfi_rd_addr to be zero when rd is not written;
+  // Otherwise register_index == rvfi_rd_addr will match and register_shadow
+  // is captured. Ensure this by clearing rvfi_rd_addr in early stage of
+  // instruction processing, e.g., when cntrl_icyc==1.
+  if ((cntrl_icyc == 'b1) | rvfi_valid) begin
     rvfi_rd_addr    <= 'b0;
-    fv_rf_we        <= 'b0;
-  end else if (id_rf_we | fv_rf_we) begin
-    fv_rf_we        <= 'b1;
+  end else if (id_rf_we) begin
     rvfi_rd_addr    <= id_rd;
   end
 
