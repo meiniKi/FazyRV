@@ -1,6 +1,6 @@
 name: Verification
 
-on: [pull_request]
+on: [push, workflow_dispatch, pull_request]
 
 jobs:
   rvtests:
@@ -96,8 +96,9 @@ jobs:
         ./litex_setup.py --init --install --user
 
     - name: Checkout repository for LiteX use
-      run: |
-        git clone -b feature/rvc https://github.com/meiniKi/FazyRV.git
+      uses: actions/checkout@v5
+      with:
+        path: 'FazyRV'
 
     - name: Run LiteX sim
       run: |
