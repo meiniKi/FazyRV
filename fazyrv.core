@@ -14,6 +14,8 @@ filesets:
       - rtl/fazyrv_alu.sv
       - rtl/fazyrv_decode.sv
       - rtl/fazyrv_decode_mem1.sv
+      - rtl/fazyrv_rvc.sv
+      - rtl/fazyrv_align.sv
       - rtl/fazyrv_shftreg.sv
       - rtl/fazyrv_ram_dp.sv
       - rtl/fazyrv_ram_sp.sv
@@ -34,6 +36,7 @@ targets:
       - core
     parameters:
       - CHUNKSIZE
+      - RVC
       - CONF
       - MTVAL
       - BOOTADR
@@ -72,7 +75,7 @@ targets:
     default_tool: icestorm
     description: Reference implementation for iCE40 to track the area of FazyRV
     filesets: [core]
-    parameters: [CHUNKSIZE, CONF, RFTYPE, BOOTADR=0]
+    parameters: [CHUNKSIZE, CONF, RFTYPE, RVC, BOOTADR=0]
     tools:
       icestorm:
         nextpnr_options: [--hx8k, --package, ct256, --freq, 10]
@@ -85,6 +88,11 @@ parameters:
     description : Bit width of the data path; either 1, 2, 4, 8.
     paramtype   : vlogparam
   
+  RVC:
+    datatype    : str
+    description : RISC-V compressed instruction support flag.
+    paramtype   : vlogparam
+
   CONF:
     datatype    : str
     description : Feature set of the core; either "MIN", "INT", or "STR".

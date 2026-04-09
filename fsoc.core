@@ -65,6 +65,7 @@ targets:
     parameters:
       - RISCV_FORMAL
       - CHUNKSIZE
+      - RVC
       - CONF
       - MTVAL
       - BOOTADR
@@ -80,7 +81,7 @@ targets:
     default_tool: icestorm
     description: Reference implementation for iCE40 to track the area of FazyRV
     filesets: [soc, ice40_ref]
-    parameters: [MEMSIZE=64, GPOCNT=1, CHUNKSIZE, CONF, RFTYPE, MEMDLY1]
+    parameters: [MEMSIZE=64, GPOCNT=1, CHUNKSIZE, RVC, CONF, RFTYPE, MEMDLY1]
     tools:
       icestorm:
         nextpnr_options: [--hx8k, --package, ct256, --freq, 10]
@@ -91,7 +92,7 @@ targets:
     default_tool: trellis
     description: Reference implementation for ECP5 to track the area of FazyRV
     filesets: [soc, ecp5_ref]
-    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE]
+    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, RVC, CONF, RFTYPE]
     tools:
       trellis:
         nextpnr_options: [--um5g-85k, --package, CABGA381, --speed, 8, --freq, 10]
@@ -100,7 +101,7 @@ targets:
   gowin_ref:
     description: Reference implementation for Gowin LittleBee to track the area of FazyRV
     filesets: [soc, gowin_ref]
-    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE]
+    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, RVC, CONF, RFTYPE]
     flow: apicula
     flow_options:
       device: GW1NR-LV9QN88PC6/I5
@@ -111,7 +112,7 @@ targets:
     default_tool: peppercorn
     description: Reference implementation for GateMate to track the area of FazyRV
     filesets: [soc, gatemate_ref]
-    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE]
+    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, RVC, CONF, RFTYPE]
     tools:
       peppercorn:
         device: CCGM1A1
@@ -125,7 +126,7 @@ targets:
     tools:
       vivado:
         part: xc7a35tcpg236-1
-    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, CONF, RFTYPE]
+    parameters: [MEMSIZE=64, GPOCNT=1, MEMDLY1=0, CHUNKSIZE, RVC, CONF, RFTYPE]
     toplevel: fsoc
 
   artixref:
@@ -137,6 +138,7 @@ targets:
         part: xc7a35tcpg236-1
     parameters:
       - CHUNKSIZE
+      - RVC
       - CONF
       - RFTYPE
       - MEMSIZE
@@ -147,7 +149,12 @@ parameters:
     datatype    : int
     description : Bit width of the data path.
     paramtype   : vlogparam
-  
+
+  RVC:
+    datatype    : str
+    description : RISC-V compressed instruction support flag.
+    paramtype   : vlogparam
+
   CONF:
     datatype    : str
     description : Feature set of the core.
@@ -203,3 +210,4 @@ parameters:
     datatype    : int
     description : Number of outputs.
     paramtype   : vlogparam
+

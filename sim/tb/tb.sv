@@ -1,4 +1,4 @@
-// Copyright (c) 2023 - 2024 Meinhard Kissich
+// Copyright (c) 2023 - 2026 Meinhard Kissich
 // -----------------------------------------------------------------------------
 // File  :  tb.sv
 // Usage :  Testbench to execute the riscvtests.
@@ -9,6 +9,7 @@
 module tb;
 
 localparam CHUNKSIZE  = `CHUNKSIZE;
+localparam RVC        = `RVC;
 localparam RFTYPE     = `RFTYPE;
 localparam CONF       = `CONF;
 localparam MEMDLY1    = `MEMDLY1;
@@ -147,6 +148,7 @@ wb_ram #(.depth(32768), .memfile("firmware/firmware.hex")) i_mem (
 
 fazyrv_top #( 
   .CHUNKSIZE  ( CHUNKSIZE ),
+  .RVC        ( RVC       ),
   .CONF       ( CONF      ),
   .MTVAL      ( MTVAL     ),
   .BOOTADR    ( BOOTADR   ),

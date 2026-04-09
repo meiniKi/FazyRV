@@ -5,12 +5,16 @@
 // Usage :  FazyRV core.
 // Param
 //  - CHUNKSIZE         Data path width (1, 2, 4, or 8)
+//  - RVC               Compressed instruction support and type. (NONE, COMB, REG, HYBR)
 //  - CONF              Configuration of the processor (MIN, INT, or CSR).
 //  - MTVAL             Initial value of the mtval CSR (if present).
 //  - BOOTADR           Boot address of the core, i.e., first address fetched.
 //  - RFTYPE            RAM type used for register file. Required in the control
 //                      logic to adapt for delays.
 //  - MEMDLY1           TODO
+//  - ALIGN             In case of RVC, alignment is relaxed to a 2-byte boundary
+//                      if (1), misaligned accesses are split into word-aligned 
+//                      accesses only.
 //
 // Ports
 //  - clk_i             Clock input, sensitive to rising edge.
@@ -59,11 +63,13 @@
 
 module fazyrv_core #(
   parameter CHUNKSIZE = 2,
+  parameter RVC       = "NONE",
   parameter CONF      = "MIN",
   parameter MTVAL     = 0,
   parameter BOOTADR   = 0,
   parameter RFTYPE    = "BRAM_DP_BP",
-  parameter MEMDLY1   = 0
+  parameter MEMDLY1   = 0,
+  parameter ALIGN     = 1
 ) (
   input  logic          clk_i,
   input  logic          rst_in,
@@ -112,7 +118,14 @@ module fazyrv_core #(
 
 localparam REG_WIDTH = 32;
 
-logic imem_stb;
+logic [31:0] if_imem_dat;
+logic        if_imem_stb;
+logic        if_imem_ack;
+
+logic        id_rvc_is_c;
+logic        id_rvc_stb;
+logic        id_rvc_ack;
+logic [31:0] id_rvc_dat;
 
 logic [4:0]           id_rs1;
 logic [4:0]           id_rs2;
@@ -226,12 +239,25 @@ assign trap_o = trap_entry_r; //id_except & cntrl_cyc_two;
 //  88            Y8a.    .a8P
 //  88             `"Y8888Y"'
 
-// pc_inc + imm --> TODO: fix offset 1 for RVC
-// restrict to mod4 pc in formal proofs
+// Restrict pc in formal proofs for MIN variant as no 
+// istruction-address-misaligned exception can happen
+//
 `ifdef RISCV_FORMAL
-always_ff @(posedge clk_i) begin
-  if (wb_imem_ack_i) assume (pc[1:0] == 2'b0);
-end
+generate
+  /* verilator lint_off WIDTHEXPAND */
+  if (CONF == "MIN") begin 
+    if (RVC != "NONE") begin
+  /* verilator lint_on WIDTHEXPAND */
+      always_ff @(posedge clk_i) begin
+        if (id_rvc_ack) assume (pc[0] == 1'b0);
+      end
+    end else begin
+      always_ff @(posedge clk_i) begin
+        if (id_rvc_ack) assume (pc[1:0] == 2'b0);
+      end
+    end
+  end
+endgenerate
 `endif
 
 logic [31:0]          pc;
@@ -270,11 +296,15 @@ generate
   end
 endgenerate
 
-fazyrv_pc #( .CHUNKSIZE(CHUNKSIZE), .BOOTADR(BOOTADR) ) i_fazyrv_pc
-(
+fazyrv_pc #(
+  .CHUNKSIZE  ( CHUNKSIZE ),
+  .RVC        ( RVC       ),
+  .BOOTADR    ( BOOTADR   )
+) i_fazyrv_pc (
   .clk_i        ( clk_i       ),
   .rst_in       ( rst_in      ),
   .inc_i        ( pc_inc      ), // always inc, maybe overwrite
+  .is_rvc_i     ( id_rvc_is_c ),
   .shift_i      ( ~hlt_regs   ),
   .din_i        ( pc_din      ),
   .pc_ser_o     ( pc_ser      ),
@@ -312,8 +342,8 @@ fazyrv_cntrl #(
   .rf_ram_wstb_o    ( rf_ram_wstb_o     ),
   .rf_ram_rstb_o    ( rf_ram_rstb_o     ),
 
-  .imem_stb_o       ( imem_stb          ),
-  .imem_ack_i       ( wb_imem_ack_i     ),
+  .imem_stb_o       ( id_rvc_stb        ),
+  .imem_ack_i       ( id_rvc_ack        ),
   .dmem_stb_o       ( dmem_stb          ),
   .dmem_ack_i       ( wb_dmem_ack_i     ),
 
@@ -346,9 +376,41 @@ fazyrv_cntrl #(
 //  88  88               d8"             88  88    `888'    88  88           88    `888'    88
 //  88  88              8P'              88  88     `8'     88  88888888888  88     `8'     88
 
-assign wb_imem_stb_o  = imem_stb;
-assign wb_imem_cyc_o  = imem_stb;
-assign wb_imem_adr_o  = pc & ~'b11;
+generate
+  if (ALIGN) begin
+    logic imem_stb_algn;
+
+    fazyrv_align i_fazyrv_align (
+      .clk_i         ( clk_i         ),
+      .rst_in        ( rst_in        ),
+
+      .wb_core_stb_i ( if_imem_stb   ),
+      .wb_core_adr_i ( pc & ~'b1     ),
+      .wb_core_dat_o ( if_imem_dat   ),
+      .wb_core_ack_o ( if_imem_ack   ),
+
+      .wb_mem_stb_o  ( imem_stb_algn ),
+      .wb_mem_adr_o  ( wb_imem_adr_o ),
+      .wb_mem_dat_i  ( wb_imem_dat_i ),
+      .wb_mem_ack_i  ( wb_imem_ack_i )
+    );
+    assign wb_imem_cyc_o = imem_stb_algn;
+    assign wb_imem_stb_o = imem_stb_algn;
+
+  end else begin
+    assign wb_imem_stb_o  = if_imem_stb;
+    assign wb_imem_cyc_o  = if_imem_stb;
+    /* verilator lint_off WIDTHEXPAND */
+    if (RVC != "NONE") begin
+    /* verilator lint_on WIDTHEXPAND */
+      assign wb_imem_adr_o  = pc & ~'b1;
+    end else begin
+      assign wb_imem_adr_o  = pc & ~'b11;
+    end
+    assign if_imem_dat = wb_imem_dat_i;
+    assign if_imem_ack = wb_imem_ack_i;
+  end
+endgenerate
 
 //  88888888ba,    88b           d88  88888888888  88b           d88
 //  88      `"8b   888b         d888  88           888b         d888
@@ -374,24 +436,86 @@ assign wb_dmem_be_o  = id_ls_mask;
 //  88  88      .a8P
 //  88  88888888Y"'
 
+generate
+  /* verilator lint_off WIDTHEXPAND */
+  if (RVC != "NONE") begin
+  /* verilator lint_on WIDTHEXPAND */
+    logic [31:0] rvc_dat;
+    logic        rvc_is_c;
 
-logic tmp_dly_r;
+    fazyrv_rvc i_fazyrv_rvc
+    (
+      .clk_i     ( clk_i       ),
+      .ack_i     ( if_imem_ack ),
+      .instr_c_i ( if_imem_dat ),
+      .instr_o   ( rvc_dat     ),
+      .is_rvc_o  ( rvc_is_c    )
+    );
 
-always_ff @(posedge clk_i) begin
-  tmp_dly_r <= wb_imem_ack_i;
-end
+    /* verilator lint_off WIDTHEXPAND */
+    if ((RVC != "COMB")) begin
+    /* verilator lint_on WIDTHEXPAND */
+      logic [31:0] rvc_dat_r;
+      logic        rvc_ack_r;
+
+      always_ff @(posedge clk_i) begin
+        rvc_ack_r <= if_imem_ack; 
+        if (if_imem_ack) begin
+          rvc_dat_r <= rvc_dat;
+        end
+      end
+
+      assign id_rvc_is_c = rvc_is_c;
+      assign if_imem_stb = id_rvc_stb & ~rvc_ack_r;
+
+      /* verilator lint_off WIDTHEXPAND */
+      if (RVC == "HYBR") begin
+      /* verilator lint_on WIDTHEXPAND */
+        logic rvc_hyb_act;
+        assign rvc_hyb_act = &if_imem_dat[1:0] & if_imem_ack & if_imem_stb;
+        assign id_rvc_ack  = rvc_hyb_act ? if_imem_ack : rvc_ack_r;
+        assign id_rvc_dat  = rvc_hyb_act ? if_imem_dat : rvc_dat_r;
+      end else begin
+        assign id_rvc_dat  = rvc_dat_r;
+        assign id_rvc_ack  = rvc_ack_r;
+      end
+
+    end else begin
+      assign id_rvc_is_c = rvc_is_c;
+      assign id_rvc_ack  = if_imem_ack;
+      assign id_rvc_dat  = rvc_dat;
+      assign if_imem_stb = id_rvc_stb;
+    end
+
+  end else begin
+    assign id_rvc_is_c = 1'b0;
+    assign id_rvc_dat  = if_imem_dat;
+    assign id_rvc_ack  = if_imem_ack; 
+    assign if_imem_stb = id_rvc_stb;
+  end
+endgenerate
+
 
 generate
   if (MEMDLY1 == 1) begin
-    fazyrv_decode_mem1 #(.CHUNKSIZE(CHUNKSIZE), .CONF(CONF), .RFTYPE(RFTYPE)) i_fazyrv_decode
-    (
+    logic mem1_dly_r;
+
+    always_ff @(posedge clk_i) begin
+      mem1_dly_r <= id_rvc_ack;
+    end
+
+    fazyrv_decode_mem1 #(
+      .CHUNKSIZE  ( CHUNKSIZE ),
+      .CONF       ( CONF      ),
+      .RFTYPE     ( RFTYPE    )
+    ) i_fazyrv_decode (
       .clk_i              ( clk_i             ),
       .rst_in             ( rst_in            ),
       .trap_entry_i       ( trap_entry_r      ),
       .adr_lsbs_i         ( spm_a_par[1:0]    ),
-      .instr_i            ( wb_imem_dat_i     ),
-      .stb_ir_i           ( wb_imem_ack_i     ),
-      .stb_cntrl_i        ( tmp_dly_r | cntrl_cyc_two_shift_next  ),
+      .instr_i            ( id_rvc_dat        ),
+      .stb_ir_i           ( id_rvc_ack        ),
+      .stb_cntrl_i        ( mem1_dly_r | cntrl_cyc_two_shift_next ),
       .cyc_two_i          ( cntrl_cyc_two_shift_next              ),
       .shft_imm_i         ( ~hlt_imm          ),
 
@@ -449,9 +573,9 @@ generate
       .rst_in             ( rst_in            ),
       .trap_entry_i       ( trap_entry_r      ),
       .adr_lsbs_i         ( spm_a_par[1:0]    ),
-      .instr_i            ( wb_imem_dat_i     ),
-      .stb_ir_i           ( wb_imem_ack_i     ),
-      .stb_cntrl_i        ( 'b0               ),
+      .instr_i            ( id_rvc_dat        ),
+      .stb_ir_i           ( id_rvc_ack        ),
+      .stb_cntrl_i        ( 1'b0              ),
       .cyc_two_i          ( cntrl_cyc_two|cntrl_cyc_shft|wb_imem_stb_o ),
       .shft_imm_i         ( ~hlt_imm          ),
 
@@ -534,7 +658,7 @@ assign rf_rb      = rf_rb_i;
 assign rf_hpmtc_o = id_csr_hpmtc;
 
 // TODO: opt?
-assign rf_csr_o   = id_instr_csr & (~cntrl_cyc_two | cntrl_lsb) & (~imem_stb);
+assign rf_csr_o   = id_instr_csr & (~cntrl_cyc_two | cntrl_lsb) & (~if_imem_stb);
 assign rf_csr_6_o = id_csr_6;
 
 
@@ -574,7 +698,7 @@ generate
           mip_mtip_r <= 1'b1;
         end
         // TODO: writes to mip
-        if (wb_imem_ack_i & trap_entry_r & ~id_except) begin
+        if (id_rvc_ack & trap_entry_r & ~id_except) begin
           mip_mtip_r <= 1'b0;
         end
       end
@@ -590,7 +714,7 @@ generate
           trap_pending_r <= 1'b1;
         end
 
-        if (wb_imem_ack_i) begin
+        if (id_rvc_ack) begin
           trap_pending_r  <= 1'b0;
           trap_entry_r    <= trap_pending_r;
         end
@@ -735,13 +859,13 @@ fazyrv_alu #( .CHUNKSIZE(CHUNKSIZE) ) i_fazyrv_alu
 
 (* keep *) logic [31:0] dbg_id_imm;
 
-assign dbg_new_insn = rst_in & wb_imem_ack_i;
+assign dbg_new_insn = rst_in & id_rvc_ack;
 
 always_ff @(posedge clk_i) begin
   if (dbg_new_insn) begin
-    dbg_addr_r <= wb_imem_adr_o;
+    dbg_addr_r <= pc;
 
-    dbg_insn_r <= wb_imem_dat_i;
+    dbg_insn_r <= id_rvc_dat;
 
     // Overwrite in the case of trap entry with
     // a pseudo instruction such that riscv-formal
@@ -806,7 +930,7 @@ end
 `define INSTR_MRET    (32'b??_1????_?????_?????_000??_???11_10011)
 
 always_comb begin
-  casez(wb_imem_dat_i)
+  casez(id_rvc_dat)
     `INSTR_LUI:     dbg_ascii_insn_n = "lui";
     `INSTR_AUIPC:   dbg_ascii_insn_n = "auipc";
     `INSTR_JAL:     dbg_ascii_insn_n = "jal";
@@ -887,12 +1011,18 @@ end
 
 logic [31:0] fv_ra_r;
 logic [31:0] fv_rb_r;
+logic [31:0] fv_instr_r;
 
 always_ff @(posedge clk_i) begin
   if (~rst_in) begin
-    fv_ra_r   <= 'b0;
-    fv_rb_r   <= 'b0;
+    fv_ra_r     <= 'b0;
+    fv_rb_r     <= 'b0;
+    fv_instr_r  <= 'b0;
   end else begin
+    if (if_imem_stb && if_imem_ack) begin
+      fv_instr_r <= if_imem_dat;
+    end
+
     if (rf_shft_o & ~cntrl_cyc_two) begin
       fv_ra_r   <= {rf_ra_i, fv_ra_r[31:CHUNKSIZE]};
       fv_rb_r   <= {rf_rb_i, fv_rb_r[31:CHUNKSIZE]};
@@ -908,14 +1038,14 @@ always_ff @(posedge clk_i) begin
   end
 
   if (~fv_first_fetched_r & rst_in) begin
-    fv_first_fetched_r <= wb_imem_ack_i;
+    fv_first_fetched_r <= if_imem_ack;
   end
 
   if (~fv_first_decoded_r & rst_in) begin
     fv_first_decoded_r <= fv_first_fetched_r;
   end
 
-  rvfi_valid <= rst_in & imem_stb & wb_imem_ack_i & 
+  rvfi_valid <= rst_in & if_imem_stb & if_imem_ack & 
                 fv_first_fetched_r & fv_first_decoded_r;
 
   if (rvfi_valid)
@@ -923,16 +1053,16 @@ always_ff @(posedge clk_i) begin
   else
     rvfi_order      <= rvfi_order;
 
-  rvfi_insn         <= dbg_insn_r;
+  rvfi_insn         <= fv_instr_r;
 
 
   logic fv_trap_pending_r;
 
   logic stage_dec_r;
 
-  stage_dec_r <= wb_imem_ack_i;
+  stage_dec_r <= id_rvc_ack;
 
-  if (wb_imem_ack_i | stage_dec_r) begin
+  if (id_rvc_ack | stage_dec_r) begin
     fv_trap_pending_r <= 1'b0;
   end else if (id_except | (wb_dmem_stb_o & exc_misalngd)) begin
     fv_trap_pending_r <= 1'b1;
@@ -957,14 +1087,14 @@ always_ff @(posedge clk_i) begin
   rvfi_rs2_addr   <= id_rs2 & {5{~id_instr_ld}};
   rvfi_rs2_rdata  <= fv_rb_r & {REG_WIDTH{~id_instr_ld}};
   // rvfi_rd_wdata in top directly from rf;
+
+  logic fv_rf_we;
   
-  // reg checks require rvfi_rd_addr to be zero when rd is not written;
-  // Otherwise register_index == rvfi_rd_addr will match and register_shadow
-  // is captured. Ensure this by clearing rvfi_rd_addr in early stage of
-  // instruction processing, e.g., when cntrl_icyc==1.
-  if ((cntrl_icyc == 'b1) | rvfi_valid) begin
+  if (rvfi_valid | id_instr_any_br | id_instr_st) begin
     rvfi_rd_addr    <= 'b0;
-  end else if (id_rf_we) begin
+    fv_rf_we        <= 'b0;
+  end else if (id_rf_we | fv_rf_we) begin
+    fv_rf_we        <= 'b1;
     rvfi_rd_addr    <= id_rd;
   end
 
@@ -991,10 +1121,11 @@ always_ff @(posedge clk_i) begin
   end
 end
 
-// adopted from SERV
-always @(wb_imem_adr_o)
-  rvfi_pc_wdata <= wb_imem_adr_o;
-
+always @(posedge clk_i) begin
+  if (wb_imem_ack_i) begin
+    rvfi_pc_wdata <= pc;
+  end
+end
 `endif
 
 endmodule

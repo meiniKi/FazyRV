@@ -34,6 +34,12 @@ def sim_args(parser):
         help='Report insn timing'
     )
 
+    parser.add_argument(
+        '--rvc',
+        type=str,
+        default=0,
+        help='Use compressed instructions'
+    )
 
 if __name__ == "__main__":
 
@@ -54,9 +60,9 @@ if __name__ == "__main__":
     cmd += f"fusesoc library add fazyrv {fazyrv_root}"
     cmd += f" && fusesoc library add fsoc {fazyrv_root}"
     cmd += f" && riscv32-unknown-elf-objcopy -O binary {abs_bench} {abs_bench}.bin"
-    cmd += f" && python3 ../../../../script/makehex.py {abs_bench}.bin {abs_bench}.hex"
+    cmd += f" && python3 {fazyrv_root}/script/makehex.py {abs_bench}.bin {abs_bench}.hex"
     cmd += f" && fusesoc run --target=verilator_tb --build --work-root=work_simfsoc fsoc \
---MEMSIZE=131072 --CHUNKSIZE={args.chunksize} --CONF={args.conf} --RFTYPE={args.rftype} --BOOTADR=0 --DEBUG=1 --SIM=1"
+--MEMSIZE=131072 --CHUNKSIZE={args.chunksize} --CONF={args.conf} --RFTYPE={args.rftype} --RVC={args.rvc} --BOOTADR=0 --DEBUG=1 --SIM=1"
     cmd += f" && work_simfsoc/Vfsoc_sim \
 +firmware={abs_bench}.hex +embench=result"
     if args.insn_timing:
