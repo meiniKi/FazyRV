@@ -8,7 +8,7 @@ module rvfi_wrapper (
 );
 
   localparam PAR_BWIDTH = `CHUNKSIZE;
-  localparam RVC        = "REG"; // TODO: `RVC;
+  localparam RVC        = `RVC;
   localparam CONF       = "MIN";
   localparam MTVAL      = 'b0;
   localparam BOOTADR    = 'h0;

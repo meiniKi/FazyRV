@@ -57,7 +57,7 @@ RVF_CHUNKSIZES := 8 4 2 1
 #
 
 RVTESTS_CHUNKSIZES := 8 4 2 1
-RVTESTS_CONF_RF_RVC := MIN-LOGIC-NONE MIN-LOGIC-COMB MIN-LOGIC-REGS MIN-LOGIC-HYBR MIN-BRAM MIN-BRAM_BP MIN-BRAM_DP MIN-BRAM_DP_BP
+RVTESTS_CONF_RF_RVC := MIN-LOGIC-NONE MIN-LOGIC-COMB MIN-LOGIC-REG MIN-LOGIC-HYBR MIN-BRAM-NONE MIN-BRAM_BP-NONE MIN-BRAM_DP-NONE MIN-BRAM_DP_BP-NONE
 
 RVTESTS_PARAMS	:= 	$(foreach bdwidth,$(RVTESTS_CHUNKSIZES),\
 					$(foreach con_rf_rvc,$(RVTESTS_CONF_RF_RVC),$(bdwidth)-$(con_rf_rvc)))
@@ -78,16 +78,16 @@ TOP_MODULE_SOC := fsoc
 TOP_MODULE_CORE := fazyrv_core
 TOP_MODULE_TOP := fazyrv_top
 
-WORK_DIR_MAIN		:= work
+WORK_DIR_MAIN		?= work
 
-WORK_DIR_CORE		:= $(WORK_DIR_MAIN)/work_core
-WORK_DIR_SOC		:= $(WORK_DIR_MAIN)/work_soc
-WORK_DIR_RISCOF		:= $(WORK_DIR_MAIN)/work_riscof
+WORK_DIR_CORE		?= $(WORK_DIR_MAIN)/work_core
+WORK_DIR_SOC		?= $(WORK_DIR_MAIN)/work_soc
+WORK_DIR_RISCOF		?= $(WORK_DIR_MAIN)/work_riscof
 
-SUMMARY_DIR_SOC			:= $(WORK_DIR_MAIN)/summary_fsoc_soc
-SUMMARY_DIR_CORE		:= $(WORK_DIR_MAIN)/summary_fazyrv
-SUMMARY_DIR_RISCOF 		:= $(WORK_DIR_MAIN)/summary_riscof
-SUMMARY_DIR_RISCVTESTS 	:= $(WORK_DIR_MAIN)/summary_riscvtests
+SUMMARY_DIR_SOC			?= $(WORK_DIR_MAIN)/summary_fsoc_soc
+SUMMARY_DIR_CORE		?= $(WORK_DIR_MAIN)/summary_fazyrv
+SUMMARY_DIR_RISCOF 		?= $(WORK_DIR_MAIN)/summary_riscof
+SUMMARY_DIR_RISCVTESTS 	?= $(WORK_DIR_MAIN)/summary_riscvtests
 
 get_depth_value = $(if $(filter $(1),8),30,\
 					$(if $(filter $(1),4),37,\
@@ -165,12 +165,12 @@ riscof.run.%: $(SRC_DESIGN) $(SRC_SYNTH)
 	mkdir -p $(SUMMARY_DIR_RISCOF)
 	riscof testlist --config=$(if $(filter NONE,$(RVC)),dv/config.ini,dv/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env
 	RISCOF_CHUNKSIZE=$(CHUNKSIZE) RISCOF_RVC=$(RVC) RISCOF_CONF=$(CONF) RISCOF_RFTYPE=$(RF) \
-		riscof run --no-browser --config=$(if $(filter NONE,$(RVC)),dv/config.ini,dv/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/tmp.txt
-	@ ! grep -q -e "Failed" -e "ERROR" $(SUMMARY_DIR_RISCOF)/tmp.txt
-	@echo $$? > $(SUMMARY_DIR_RISCOF)/$*.log
-	@rm $(SUMMARY_DIR_RISCOF)/tmp.txt
-# riscof exit code does not report failures, see Issue #102
-# workaround using the tmp.txt file
+		riscof run --no-browser --config=$(if $(filter NONE,$(RVC)),dv/config.ini,dv/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/rv32i_m/I --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/$*.log
+	@if [ "$(RVC)" != "NONE" ]; then \
+		RISCOF_CHUNKSIZE=$(CHUNKSIZE) RISCOF_RVC=$(RVC) RISCOF_CONF=$(CONF) RISCOF_RFTYPE=$(RF) \
+			riscof run --no-browser --config=$(if $(filter NONE,$(RVC)),dv/config.ini,dv/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/rv32i_m/C --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee -a $(SUMMARY_DIR_RISCOF)/$*.log; \
+	fi
+
 
 riscof.all: $(addprefix riscof.run., $(RVTESTS_PARAMS))
 	@if [ -z "$$(find $(SUMMARY_DIR_RISCOF) -name '*.log')" ]; then \
@@ -207,7 +207,6 @@ fv.rvformal.bmc.insn.%:
 	$(eval RVC=$(word 2,$(subst -, ,$*)))
 	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $(CHUNKSIZE)/' riscv-formal/cores/fazyrv/checks_bmc_insn.cfg
 	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $(CHUNKSIZE))/" riscv-formal/cores/fazyrv/checks_bmc_insn.cfg
-	echo "[WARNING] DEF_RVC currently needs to be hardcoded in wrapper file!"
 	@if [ $(RVC) = "NONE" ]; then \
 		sed -i 's/<INSERT_ISA>/rv32i/g' riscv-formal/cores/fazyrv/checks_bmc_insn.cfg; \
 		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_bmc_insn.cfg; \
@@ -227,7 +226,6 @@ fv.rvformal.bmc.reg.%:
 	$(eval RVC=$(word 2,$(subst -, ,$*)))
 	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $(CHUNKSIZE)/' riscv-formal/cores/fazyrv/checks_bmc_reg.cfg
 	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $(CHUNKSIZE))/" riscv-formal/cores/fazyrv/checks_bmc_reg.cfg
-	echo "[WARNING] DEF_RVC currently needs to be hardcoded in wrapper file!"
 	@if [ $(RVC) = "NONE" ]; then \
 		sed -i 's/<INSERT_ISA>/rv32i/g' riscv-formal/cores/fazyrv/checks_bmc_reg.cfg; \
 		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_bmc_reg.cfg; \
@@ -247,7 +245,6 @@ fv.rvformal.cov.insn.%:
 	$(eval RVC=$(word 2,$(subst -, ,$*)))
 	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $(CHUNKSIZE)/' riscv-formal/cores/fazyrv/checks_cov_insn.cfg
 	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $(CHUNKSIZE))/" riscv-formal/cores/fazyrv/checks_cov_insn.cfg
-	echo "[WARNING] DEF_RVC currently needs to be hardcoded in wrapper file!"
 	@if [ $(RVC) = "NONE" ]; then \
 		sed -i 's/<INSERT_ISA>/rv32i/g' riscv-formal/cores/fazyrv/checks_cov_insn.cfg; \
 		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_cov_insn.cfg; \
@@ -267,7 +264,6 @@ fv.rvformal.cov.reg.%:
 	$(eval RVC=$(word 2,$(subst -, ,$*)))
 	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $(CHUNKSIZE)/' riscv-formal/cores/fazyrv/checks_cov_reg.cfg
 	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $(CHUNKSIZE))/" riscv-formal/cores/fazyrv/checks_cov_reg.cfg
-	echo "[WARNING] DEF_RVC currently needs to be hardcoded in wrapper file!"
 	@if [ $(RVC) = "NONE" ]; then \
 		sed -i 's/<INSERT_ISA>/rv32i/g' riscv-formal/cores/fazyrv/checks_cov_reg.cfg; \
 		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_cov_reg.cfg; \

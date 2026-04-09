@@ -6,39 +6,143 @@ jobs:
   rvtests:
     name: Run rvtests
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        CHUNKSIZE: [8, 4, 2, 1]
+        CONF: [MIN]
+        RFTYPE: [LOGIC, BRAM, BRAM_DP]
+        RVC: [NONE]
+        include:
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: BRAM_BP
+            RVC: NONE
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: BRAM_DP_BP
+            RVC: NONE
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: LOGIC
+            RVC: COMB
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: LOGIC
+            RVC: REG
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: LOGIC
+            RVC: HYBR
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: oss-cad-suite
-      uses: YosysHQ/setup-oss-cad-suite@v3
+      uses: YosysHQ/setup-oss-cad-suite@v4
       with:
-        version: '2025-07-30'
+        version: '2026-03-26'
 
     - name: gcc
       uses: ./.github/workflows/setup-riscv-toolchain
 
     - name: RISC-V Tests
-      run: make report.riscvtests.all TOOLCHAIN_PREFIX=riscv32-unknown-elf-
+      env:
+        VARIANT: ${{ matrix.CHUNKSIZE }}-${{ matrix.CONF }}-${{ matrix.RFTYPE }}-${{ matrix.RVC }}
+        SUMMARY_DIR_RISCVTESTS: ./rvtests_summary_dir
+      run: |
+        make sim.riscvtests.${VARIANT} TOOLCHAIN_PREFIX=riscv32-unknown-elf-
+        cat ${SUMMARY_DIR_RISCVTESTS}/${VARIANT}.log >> $GITHUB_STEP_SUMMARY
 
-  riscof:
-    name: Run RISCOF tests
+  litex_sim:
+    name: Run LiteX Sim
     runs-on: ubuntu-latest
     needs: rvtests
+    strategy:
+      fail-fast: true
+      matrix:
+        CHUNKSIZE: [8]
+        CONF: [MIN]
+        RFTYPE: [LOGIC]
+
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         submodules: recursive
 
-    - uses: actions/setup-python@v5
+    - name: Install dependencies
+      run: sudo apt-get install libevent-dev libjson-c-dev libjsoncpp-dev
+
+    - uses: actions/setup-python@v6
       with:
         python-version: '3.12'
         cache: 'pip'
+    - run: pip install -r requirements.txt
 
-    - name: pip packages
-      run: pip install -r requirements.txt
+    - name: oss-cad-suite
+      uses: YosysHQ/setup-oss-cad-suite@v4
+      with:
+        version: '2026-03-26'
+
+    - name: gcc
+      uses: ./.github/workflows/setup-riscv-toolchain
+
+    - name: Install LiteX
+      run: |
+        wget https://raw.githubusercontent.com/enjoy-digital/litex/master/litex_setup.py
+        chmod +x litex_setup.py
+        ./litex_setup.py --init --install --user
+
+    - name: Checkout repository for LiteX use
+      run: |
+        git clone -b feature/rvc https://github.com/meiniKi/FazyRV.git
+
+    - name: Run LiteX sim
+      run: |
+        python .github/workflows/scripts/litex_sim_test.py ${{ matrix.CHUNKSIZE }} ${{ matrix.CONF }} ${{ matrix.RFTYPE }}
+
+  riscof:
+    name: Run RISCOF
+    runs-on: ubuntu-latest
+    needs: rvtests
+    strategy:
+      fail-fast: true
+      matrix:
+        CHUNKSIZE: [8, 4, 2, 1]
+        CONF: [MIN]
+        RFTYPE: [LOGIC]
+        RVC: [NONE]
+        include:
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: BRAM_DP_BP
+            RVC: NONE
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: BRAM_BP
+            RVC: NONE
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: BRAM_DP
+            RVC: REG
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: BRAM_DP
+            RVC: HYBR
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        submodules: recursive
+
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+    - run: pip install -r requirements.txt
 
     - name: fusesoc library
       run: |
@@ -46,9 +150,9 @@ jobs:
         fusesoc library add fsoc .
 
     - name: oss-cad-suite
-      uses: YosysHQ/setup-oss-cad-suite@v3
+      uses: YosysHQ/setup-oss-cad-suite@v4
       with:
-        version: '2025-07-30'
+        version: '2026-03-26'
 
     - name: gcc
       uses: ./.github/workflows/setup-riscv-toolchain
@@ -57,90 +161,42 @@ jobs:
       uses: ./.github/workflows/setup-sail
 
     - name: RISCOF
+      env:
+        VARIANT: ${{ matrix.CHUNKSIZE }}-${{ matrix.CONF }}-${{ matrix.RFTYPE }}-${{ matrix.RVC }}
+        SUMMARY_DIR_RISCOF: ./riscof_summary_dir
       run: |
         make riscof.prepare
-        make riscof.all
+        make riscof.run.${VARIANT}
+        cat ${SUMMARY_DIR_RISCOF}/${VARIANT}.log >> $GITHUB_STEP_SUMMARY
 
-  cov_insn:
-    name: Cover insn checks
+  rvformal:
+    name: Run RISC-V Formal Checks
     runs-on: ubuntu-latest
-    needs: rvtests
+    needs: riscof
+    strategy:
+      fail-fast: true
+      matrix:
+        CHUNKSIZE: [8, 4, 2]
+        RVC: [NONE]
+        include:
+          - CHUNKSIZE: 8
+            RVC: COMB
+          - CHUNKSIZE: 8
+            RVC: REG
+
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         submodules: recursive
 
     - name: oss-cad-suite
-      uses: YosysHQ/setup-oss-cad-suite@v3
+      uses: YosysHQ/setup-oss-cad-suite@v4
       with:
-        version: '2025-07-30'
+        version: '2026-03-26'
 
-    - name: cov.8
-      run: make fv.rvformal.cov.insn.8
-
-    - name: cov.4
-      run: make fv.rvformal.cov.insn.4
-
-  cov_reg:
-    name: Cover reg checks
-    runs-on: ubuntu-latest
-    needs: rvtests
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: oss-cad-suite
-      uses: YosysHQ/setup-oss-cad-suite@v3
-      with:
-        version: '2025-07-30'
-
-    - name: cov.8
-      run: make fv.rvformal.cov.reg.8
-
-    - name: cov.4
-      run: make fv.rvformal.cov.reg.4
-
-  bmc_insn:
-    name: BMC insn checks
-    runs-on: ubuntu-latest
-    needs: rvtests
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: oss-cad-suite
-      uses: YosysHQ/setup-oss-cad-suite@v3
-      with:
-        version: '2025-07-30'
-
-    - name: bmc.8
-      run: make fv.rvformal.bmc.insn.8
-  
-    - name: bmc.4
-      run: make fv.rvformal.bmc.insn.4
-
-  bmc_reg:
-    name: BMC reg checks
-    runs-on: ubuntu-latest
-    needs: rvtests
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: oss-cad-suite
-      uses: YosysHQ/setup-oss-cad-suite@v3
-      with:
-        version: '2025-07-30'
-
-    - name: bmc.8
-      run: make fv.rvformal.bmc.reg.8
-
-    - name: bmc.4
-      run: make fv.rvformal.bmc.reg.4
+    - name: checks
+      env:
+        VARIANT: ${{ matrix.CHUNKSIZE }}-${{ matrix.RVC }}
+      run: |
+        make fv.rvformal.bmc.insn.${VARIANT}
