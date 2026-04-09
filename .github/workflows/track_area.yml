@@ -55,12 +55,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
 
       - name: Copy to docs
         run: |
-          cp area_plot/area.svg doc/area.svg
-          cp area_plot/area.txt doc/area.txt
+          cp area.svg doc/area.svg
+          cp area.txt doc/area.txt
 
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
