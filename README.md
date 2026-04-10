@@ -46,7 +46,6 @@ FazyRV is contained in `rtl` and licensed under a permissive MIT license.
 `rtl/fazyrv_top.sv` is the top module and instantiates the FazyRV core (`rtl/fazyrv_core.sv`) alongside the register file. The reference SoC (fsoc) is located in `soc/rtl` along with a constraint file for common architectures.
 
 
-
 The data flow through the core can be outlined as follows:
 <p align="center">
   <img src="./doc/block.png" alt="block diagram" style="width:550px;"/>
@@ -130,7 +129,7 @@ fusesoc library add fazyrv .
 fusesoc library add fsoc .
 ```
 
-Then, you can use the targets in the core file or run the flow with the Make targets below. A reference implementation for the following architectures is supported. Replace `<ARCH>` with the desired target architecture (see below). Also, replace `<CHUNKSIZE>`, `<CONF>`, and `<RFTYPE>` with the desired values.
+Then, you can use the targets in the core file or run the flow with the Make targets below. A reference implementation for the following architectures is supported. Replace `<ARCH>` with the desired target architecture (see below). Also, replace `<CHUNKSIZE>`, `<CONF>`, `<RFTYPE>`, and `<RVC>` with the desired values.
 
 ```
 ARCH        := ice40 | ecp5 | gowin | xilinx | gatemate
@@ -138,13 +137,13 @@ ARCH        := ice40 | ecp5 | gowin | xilinx | gatemate
 
 ```shell
 # run the flow only
-make impl.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
+make impl.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>-<RVC>
 
 # run the flow and report a summary of the results
-make report.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>
+make report.soc.<ARCH>-<CHUNKSIZE>-<CONF>-<RFTYPE>-<RVC>
 
 # e.g.,
-make report.soc.ice40-8-MIN-BRAM
+make report.soc.ice40-8-MIN-BRAM-NONE
 
 # Make a markdown summary of all configurations
 # given an architecture
@@ -166,13 +165,13 @@ litex_sim --cpu-type=fazyrv --cpu-chunksize=4 --cpu-rftype=LOGIC
 
 riscv-tests are used as fast checks to get feedback if a variant is broken. However, the tests are not as sensitive as the RISCOF tests and may report false positives.
 
-Execute the tests with the make target below by replacing the `<CHUNKSIZE>`, `<CONF>`, and `<RFTYPE>` with the desired variant or run it on all variants.
+Execute the tests with the make target below by replacing the `<CHUNKSIZE>`, `<CONF>`, `<RFTYPE>`, and `<RVC>` with the desired variant or run it for a selected subset of all variants.
 
 ```shell
 # riscv-tests
-make sim.riscvtests.<CHUNKSIZE>-<CONF>-<RFTYPE>
+make sim.riscvtests.<CHUNKSIZE>-<CONF>-<RFTYPE>-<RVC>
 # e.g.,
-make sim.riscvtests.8-MIN-BRAM
+make sim.riscvtests.8-MIN-BRAM-NONE
 # or
 make report.riscvtests.all
 ```
@@ -180,15 +179,15 @@ make report.riscvtests.all
 
 ### Run RISCOF
 
-The RISCOF framework provides more extensive simulation-based design tests. You can run the test either for one variant or use `riscof.all` to run  the tests for a selected subset of all variants.
+The RISCOF framework provides more extensive simulation-based design tests. You can run the test either for one variant or use `riscof.all` to run the tests for a selected subset of all variants.
 
 ```shell
 # RISCOF
 make riscof.prepare
-make riscof.run.<CHUNKSIZE>-<CONF>-<RFTYPE>
+make riscof.run.<CHUNKSIZE>-<CONF>-<RFTYPE>-<RVC>
 # e.g.,
 make riscof.prepare
-make riscof.run.8-MIN-BRAM
+make riscof.run.8-MIN-BRAM-NONE
 # or
 make riscof.prepare
 make riscof.all
@@ -215,21 +214,15 @@ In addition to simulation-based tests, formal checks are applied using riscv-for
 
 ```shell
 # insn checks
-make fv.rvformal.bmc.insn.<CHUNKSIZE>
-make fv.rvformal.cov.insn.<CHUNKSIZE>
+make fv.rvformal.bmc.insn.<CHUNKSIZE>-<RVC>
+make fv.rvformal.cov.insn.<CHUNKSIZE>-<RVC>
 
 # reg checks
-make fv.rvformal.bmc.reg.<CHUNKSIZE>
-make fv.rvformal.cov.reg.<CHUNKSIZE>
+make fv.rvformal.bmc.reg.<CHUNKSIZE>-<RVC>
+make fv.rvformal.cov.reg.<CHUNKSIZE>-<RVC>
 
 # e.g.
-make fv.rvformal.bmc.insn.8 && make fv.rvformal.cov.insn.8
-
-# or run them sequentiall on all chunk sizes
-make fv.rvformal.all.bmc.insn
-make fv.rvformal.all.bmc.reg
-make fv.rvformal.all.cov.insn
-make fv.rvformal.all.cov.reg
+make fv.rvformal.bmc.insn.8-NONE && make fv.rvformal.cov.insn.8-NONE
 ```
 
 ## Benchmarks

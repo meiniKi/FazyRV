@@ -46,13 +46,6 @@ PLOT_PARAMS := $(foreach bdwidth,$(PLOT_CHUNKSIZES),\
 
 
 ################################
-# Formal chuck sizes to verify 
-#
-
-RVF_CHUNKSIZES := 8 4 2 1
-
-
-################################
 # Simulation combinations 
 #
 
@@ -276,14 +269,6 @@ fv.rvformal.cov.reg.%:
 	cd riscv-formal/cores/fazyrv && ./stats.sh checks_cov_reg
 	cd riscv-formal/cores/fazyrv && rm -vrf checks
 
-
-fv.rvformal.all.bmc.insn: $(addprefix fv.rvformal.bmc.insn., $(RVF_CHUNKSIZES))
-
-fv.rvformal.all.bmc.reg: $(addprefix fv.rvformal.bmc.reg., $(RVF_CHUNKSIZES))
-
-fv.rvformal.all.cov.insn: $(addprefix fv.rvformal.cov.insn., $(RVF_CHUNKSIZES))
-
-fv.rvformal.all.cov.reg: $(addprefix fv.rvformal.cov.reg., $(RVF_CHUNKSIZES))
 
 ################
 # Embench 
