@@ -7,6 +7,11 @@
 // Param
 //  - CHUNKSIZE   Size of the chunks, i.e., the data path.
 //                [1 (bit serial), 2, 4, or 8]
+//  - RVC         Type of RVC implementation.
+//                ["NONE": no compressed instruction support; 
+//                 "COMB": combinational translation into uncompressed equivalent;
+//                 "REG": instantiate registers prior to the unmodified non-RVC decoder;
+//                 "HYBR": register only compressed instructions] 
 //  - CONF        Configuration of the processor.
 //                ["MIN": no interrupts, no CSRs;
 //                "INT": simple interrupt by fixed mtval, no CSRs;
@@ -48,6 +53,7 @@
 
 module fazyrv_top #(
   parameter CHUNKSIZE = 8,
+  parameter RVC       = "NONE",
   parameter CONF      = "MIN",
   parameter MTVAL     = 'b0,
   parameter BOOTADR   = 'h0,
@@ -108,12 +114,16 @@ logic                 rf_mtie;
 
 
 fazyrv_core #(
-  .CHUNKSIZE  ( CHUNKSIZE ),
-  .CONF       ( CONF      ),
-  .MTVAL      ( MTVAL     ),
-  .BOOTADR    ( BOOTADR   ),
-  .RFTYPE     ( RFTYPE    ),
-  .MEMDLY1    ( MEMDLY1   )
+  .CHUNKSIZE  ( CHUNKSIZE     ),
+  .RVC        ( RVC           ),
+  .CONF       ( CONF          ),
+  .MTVAL      ( MTVAL         ),
+  .BOOTADR    ( BOOTADR       ),
+  .RFTYPE     ( RFTYPE        ),
+  .MEMDLY1    ( MEMDLY1       ),
+  /* verilator lint_off WIDTHEXPAND */
+  .ALIGN      ( RVC != "NONE" )
+  /* verilator lint_on WIDTHEXPAND */
 ) i_fazyrv_core (
   .clk_i            ( clk_i             ),
   .rst_in           ( rst_in            ),
@@ -323,6 +333,9 @@ endgenerate
 localparam CHUNKSIZE_OK = (CHUNKSIZE==1) || (CHUNKSIZE==2) ||
                           (CHUNKSIZE==4) || (CHUNKSIZE==8);
 
+localparam RVC_OK       = (RVC=="NONE") || (RVC=="COMB") ||
+                          (RVC=="REG")  || (RVC=="HYBR");
+
 localparam CONF_OK      = (CONF=="MIN") || (CONF=="INT") || (CONF=="CSR");
 
 localparam RFTYPE_OK    = (RFTYPE=="LOGIC")   ||
@@ -331,7 +344,7 @@ localparam RFTYPE_OK    = (RFTYPE=="LOGIC")   ||
 
 localparam MEMDLY1_OK   = (MEMDLY1==0) || (MEMDLY1==1); 
 
-if (!(CHUNKSIZE_OK && CONF_OK && RFTYPE_OK && MEMDLY1_OK)) begin
+if (!(CHUNKSIZE_OK && RVC_OK && CONF_OK && RFTYPE_OK && MEMDLY1_OK)) begin
   $fatal(1, "At least one of the parameters is not valid.");
 end
 /* verilator lint_on WIDTHEXPAND */

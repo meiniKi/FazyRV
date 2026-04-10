@@ -20,11 +20,13 @@ COMMIT ?= n/a
 SYNTH_CHUNKSIZES 	:= 1 2 4 8
 SYNTH_CONFS 		:= MIN
 SYNTH_RF 			:= LOGIC BRAM BRAM_BP BRAM_DP BRAM_DP_BP
+SYNTH_RVC			:= NONE COMB REG HYBR
 
-# Synth param:  <CHUNKSIZE>-<CONF>-<RFTYPE>
+# Synth param:  <CHUNKSIZE>-<CONF>-<RFTYPE>-<RVC>
 SYNTH_PARAMS := $(foreach bdwidth,$(SYNTH_CHUNKSIZES),\
 				$(foreach conf,$(SYNTH_CONFS),\
-				$(foreach rf,$(SYNTH_RF),$(bdwidth)-$(conf)-$(rf))))
+				$(foreach rf,$(SYNTH_RF),\
+				$(foreach rvc,$(SYNTH_RVC),$(bdwidth)-$(conf)-$(rf)-$(rvc)))))
 
 
 ################################
@@ -34,11 +36,13 @@ SYNTH_PARAMS := $(foreach bdwidth,$(SYNTH_CHUNKSIZES),\
 PLOT_CHUNKSIZES := 1 2 4 8
 PLOT_CONFS 		:= MIN
 PLOT_RF 		:= BRAM BRAM_DP_BP
+PLOT_RVC		:= NONE
 
 # Plot param:  <CHUNKSIZE>-<CONF>-<RFTYPE>
 PLOT_PARAMS := $(foreach bdwidth,$(PLOT_CHUNKSIZES),\
 				$(foreach conf,$(PLOT_CONFS),\
-				$(foreach rf,$(PLOT_RF),$(bdwidth)-$(conf)-$(rf))))
+				$(foreach rf,$(PLOT_RF),\
+				$(foreach rvc,$(PLOT_RVC),$(bdwidth)-$(conf)-$(rf)-$(rvc)))))
 
 
 ################################
@@ -53,10 +57,10 @@ RVF_CHUNKSIZES := 8 4 2 1
 #
 
 RVTESTS_CHUNKSIZES := 8 4 2 1
-RVTESTS_CONF_RF := MIN-LOGIC MIN-BRAM MIN-BRAM_BP MIN-BRAM_DP MIN-BRAM_DP_BP
+RVTESTS_CONF_RF_RVC := MIN-LOGIC-NONE MIN-LOGIC-COMB MIN-LOGIC-REG MIN-LOGIC-HYBR MIN-BRAM-NONE MIN-BRAM_BP-NONE MIN-BRAM_DP-NONE MIN-BRAM_DP_BP-NONE
 
 RVTESTS_PARAMS	:= 	$(foreach bdwidth,$(RVTESTS_CHUNKSIZES),\
-					$(foreach con_rf,$(RVTESTS_CONF_RF),$(bdwidth)-$(con_rf)))
+					$(foreach con_rf_rvc,$(RVTESTS_CONF_RF_RVC),$(bdwidth)-$(con_rf_rvc)))
 
 
 RED='\033[0;31m'
@@ -74,21 +78,21 @@ TOP_MODULE_SOC := fsoc
 TOP_MODULE_CORE := fazyrv_core
 TOP_MODULE_TOP := fazyrv_top
 
-WORK_DIR_MAIN		:= work
+WORK_DIR_MAIN		?= work
 
-WORK_DIR_CORE		:= $(WORK_DIR_MAIN)/work_core
-WORK_DIR_SOC		:= $(WORK_DIR_MAIN)/work_soc
-WORK_DIR_RISCOF		:= $(WORK_DIR_MAIN)/work_riscof
+WORK_DIR_CORE		?= $(WORK_DIR_MAIN)/work_core
+WORK_DIR_SOC		?= $(WORK_DIR_MAIN)/work_soc
+WORK_DIR_RISCOF		?= $(WORK_DIR_MAIN)/work_riscof
 
-SUMMARY_DIR_SOC			:= $(WORK_DIR_MAIN)/summary_fsoc_soc
-SUMMARY_DIR_CORE		:= $(WORK_DIR_MAIN)/summary_fazyrv
-SUMMARY_DIR_RISCOF 		:= $(WORK_DIR_MAIN)/summary_riscof
-SUMMARY_DIR_RISCVTESTS 	:= $(WORK_DIR_MAIN)/summary_riscvtests
+SUMMARY_DIR_SOC			?= $(WORK_DIR_MAIN)/summary_fsoc_soc
+SUMMARY_DIR_CORE		?= $(WORK_DIR_MAIN)/summary_fazyrv
+SUMMARY_DIR_RISCOF 		?= $(WORK_DIR_MAIN)/summary_riscof
+SUMMARY_DIR_RISCVTESTS 	?= $(WORK_DIR_MAIN)/summary_riscvtests
 
-get_depth_value = $(if $(filter $(1),8),21,\
-					$(if $(filter $(1),4),33,\
-					$(if $(filter $(1),2),57,\
-					$(if $(filter $(1),1),105,\
+get_depth_value = $(if $(filter $(1),8),30,\
+					$(if $(filter $(1),4),37,\
+					$(if $(filter $(1),2),61,\
+					$(if $(filter $(1),1),109,\
 					<THROW_ERROR>))))
 
 ################################
@@ -112,20 +116,22 @@ lint.verilator: $(SRC_DESIGN)
 # RISCV-TESTS 
 #
 
-# param: <CHUNKSIZE>-<CONF>-<RFTYPE>
+# param: <CHUNKSIZE>-<CONF>-<RFTYPE>-<RVC>
 sim.riscvtests.%: $(SRC_DESIGN) $(SRC_SYNTH)
 	@echo "${BLUE}Simulating riscvtests for $*...${RESET}"
 	$(eval CHUNKSIZE=$(word 1,$(subst -, ,$*)))
 	$(eval CONF=$(word 2,$(subst -, ,$*)))
 	$(eval RF=$(word 3,$(subst -, ,$*)))
+	$(eval RVC=$(word 4,$(subst -, ,$*)))
 	@echo "CHUNKSIZE: $(CHUNKSIZE)"
 	@echo "CONF: $(CONF)"
 	@echo "RF: $(RF)"
+	@echo "RVC: $(RVC)"
 	mkdir -p $(SUMMARY_DIR_RISCVTESTS)
 	@if [ "$(RF)" = "LOGIC" ] || [ "$(CONF)" = "MIN" ]; then \
-		$(MAKE) -C sim test CHUNKSIZE=$(CHUNKSIZE) RFTYPE=$(RF) CONF=$(CONF) WITH_CSR=0; \
+		$(MAKE) -C sim test CHUNKSIZE=$(CHUNKSIZE) RFTYPE=$(RF) CONF=$(CONF) RVC=$(RVC) WITH_CSR=0; \
 	else \
-		$(MAKE) -C sim test CHUNKSIZE=$(CHUNKSIZE) RFYPE=$(RF) CONF=$(CONF) WITH_CSR=1; \
+		$(MAKE) -C sim test CHUNKSIZE=$(CHUNKSIZE) RFYPE=$(RF) CONF=$(CONF) RVC=$(RVC) WITH_CSR=1; \
 	fi
 	@echo $$? > $(SUMMARY_DIR_RISCVTESTS)/$*.log
 	$(MAKE) -C sim clean
@@ -144,25 +150,27 @@ riscof.prepare: dv/config.ini
 	riscof arch-test --clone
 	riscof validateyaml --config=dv/config.ini
 
-# param: <CHUNKSIZE>-<CONF>-<RFTYPE>
+# param: <CHUNKSIZE>-<CONF>-<RFTYPE>-<RVC>
 riscof.run.%: $(SRC_DESIGN) $(SRC_SYNTH)
 	@echo "${BLUE}Simulating riscvtests for $*...${RESET}"
 	$(eval CHUNKSIZE=$(word 1,$(subst -, ,$*)))
 	$(eval CONF=$(word 2,$(subst -, ,$*)))
 	$(eval RF=$(word 3,$(subst -, ,$*)))
+	$(eval RVC=$(word 4,$(subst -, ,$*)))
 	@echo "CHUNKSIZE: $(CHUNKSIZE)"
 	@echo "CONF: $(CONF)"
 	@echo "RF: $(RF)"
+	@echo "RVC: $(RVC)"
 	mkdir -p $(WORK_DIR_RISCOF)
 	mkdir -p $(SUMMARY_DIR_RISCOF)
-	riscof testlist --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env
-	RISCOF_CHUNKSIZE=$(CHUNKSIZE) RISCOF_CONF=$(CONF) RISCOF_RFTYPE=$(RF) \
-		riscof run --no-browser --config=dv/config.ini --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/tmp.txt
-	@ ! grep -q -e "Failed" -e "ERROR" $(SUMMARY_DIR_RISCOF)/tmp.txt
-	@echo $$? > $(SUMMARY_DIR_RISCOF)/$*.log
-	@rm $(SUMMARY_DIR_RISCOF)/tmp.txt
-# riscof exit code does not report failures, see Issue #102
-# workaround using the tmp.txt file
+	riscof testlist --config=$(if $(filter NONE,$(RVC)),dv/config.ini,dv/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env
+	RISCOF_CHUNKSIZE=$(CHUNKSIZE) RISCOF_RVC=$(RVC) RISCOF_CONF=$(CONF) RISCOF_RFTYPE=$(RF) \
+		riscof run --no-browser --config=$(if $(filter NONE,$(RVC)),dv/config.ini,dv/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/rv32i_m/I --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/$*.log
+	@if [ "$(RVC)" != "NONE" ]; then \
+		RISCOF_CHUNKSIZE=$(CHUNKSIZE) RISCOF_RVC=$(RVC) RISCOF_CONF=$(CONF) RISCOF_RFTYPE=$(RF) \
+			riscof run --no-browser --config=$(if $(filter NONE,$(RVC)),dv/config.ini,dv/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/rv32i_m/C --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee -a $(SUMMARY_DIR_RISCOF)/$*.log; \
+	fi
+
 
 riscof.all: $(addprefix riscof.run., $(RVTESTS_PARAMS))
 	@if [ -z "$$(find $(SUMMARY_DIR_RISCOF) -name '*.log')" ]; then \
@@ -183,7 +191,7 @@ riscof.all: $(addprefix riscof.run., $(RVTESTS_PARAMS))
 #
 
 _fv.rvformal.prepare:
-	if [ ! -d riscv-formal ]; then \
+	@if [ ! -d riscv-formal ]; then \
 		echo "[Error] riscv-formal does not exist. Are submodules initialized?"; \
 		exit 1; \
 	fi
@@ -192,41 +200,77 @@ _fv.rvformal.prepare:
 	cp rvf/* riscv-formal/cores/fazyrv/
 
 
-# param: <CHUNKSIZE>
+# param: <CHUNKSIZE>-<RVC>
 fv.rvformal.bmc.insn.%:
 	make _fv.rvformal.prepare
-	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $*/' riscv-formal/cores/fazyrv/checks_bmc_insn.cfg
-	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $*)/" riscv-formal/cores/fazyrv/checks_bmc_insn.cfg
+	$(eval CHUNKSIZE=$(word 1,$(subst -, ,$*)))
+	$(eval RVC=$(word 2,$(subst -, ,$*)))
+	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $(CHUNKSIZE)/' riscv-formal/cores/fazyrv/checks_bmc_insn.cfg
+	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $(CHUNKSIZE))/" riscv-formal/cores/fazyrv/checks_bmc_insn.cfg
+	@if [ $(RVC) = "NONE" ]; then \
+		sed -i 's/<INSERT_ISA>/rv32i/g' riscv-formal/cores/fazyrv/checks_bmc_insn.cfg; \
+		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_bmc_insn.cfg; \
+	else \
+		sed -i 's/<INSERT_ISA>/rv32ic/g' riscv-formal/cores/fazyrv/checks_bmc_insn.cfg; \
+		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_bmc_insn.cfg; \
+	fi
 	cd riscv-formal/cores/fazyrv && $(PYTHON) ../../checks/genchecks.py checks_bmc_insn
 	$(MAKE) -C riscv-formal/cores/fazyrv/checks_bmc_insn
 	cd riscv-formal/cores/fazyrv && ./stats.sh checks_bmc_insn
 	cd riscv-formal/cores/fazyrv && rm -vrf checks
 
-# param: <CHUNKSIZE>
+# param: <CHUNKSIZE>-<RVC>
 fv.rvformal.bmc.reg.%:
 	make _fv.rvformal.prepare
-	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $*/' riscv-formal/cores/fazyrv/checks_bmc_reg.cfg
-	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $*)/" riscv-formal/cores/fazyrv/checks_bmc_reg.cfg
+	$(eval CHUNKSIZE=$(word 1,$(subst -, ,$*)))
+	$(eval RVC=$(word 2,$(subst -, ,$*)))
+	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $(CHUNKSIZE)/' riscv-formal/cores/fazyrv/checks_bmc_reg.cfg
+	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $(CHUNKSIZE))/" riscv-formal/cores/fazyrv/checks_bmc_reg.cfg
+	@if [ $(RVC) = "NONE" ]; then \
+		sed -i 's/<INSERT_ISA>/rv32i/g' riscv-formal/cores/fazyrv/checks_bmc_reg.cfg; \
+		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_bmc_reg.cfg; \
+	else \
+		sed -i 's/<INSERT_ISA>/rv32ic/g' riscv-formal/cores/fazyrv/checks_bmc_reg.cfg; \
+		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_bmc_reg.cfg; \
+	fi
 	cd riscv-formal/cores/fazyrv && $(PYTHON) ../../checks/genchecks.py checks_bmc_reg
 	$(MAKE) -C riscv-formal/cores/fazyrv/checks_bmc_reg
 	cd riscv-formal/cores/fazyrv && ./stats.sh checks_bmc_reg
 	cd riscv-formal/cores/fazyrv && rm -vrf checks
 
-# param: <CHUNKSIZE>
+# param: <CHUNKSIZE>-<RVC>
 fv.rvformal.cov.insn.%:
 	make _fv.rvformal.prepare
-	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $*/' riscv-formal/cores/fazyrv/checks_cov_insn.cfg
-	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $*)/" riscv-formal/cores/fazyrv/checks_cov_insn.cfg
+	$(eval CHUNKSIZE=$(word 1,$(subst -, ,$*)))
+	$(eval RVC=$(word 2,$(subst -, ,$*)))
+	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $(CHUNKSIZE)/' riscv-formal/cores/fazyrv/checks_cov_insn.cfg
+	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $(CHUNKSIZE))/" riscv-formal/cores/fazyrv/checks_cov_insn.cfg
+	@if [ $(RVC) = "NONE" ]; then \
+		sed -i 's/<INSERT_ISA>/rv32i/g' riscv-formal/cores/fazyrv/checks_cov_insn.cfg; \
+		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_cov_insn.cfg; \
+	else \
+		sed -i 's/<INSERT_ISA>/rv32ic/g' riscv-formal/cores/fazyrv/checks_cov_insn.cfg; \
+		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_cov_insn.cfg; \
+	fi
 	cd riscv-formal/cores/fazyrv && $(PYTHON) ../../checks/genchecks.py checks_cov_insn
 	$(MAKE) -C riscv-formal/cores/fazyrv/checks_cov_insn
 	cd riscv-formal/cores/fazyrv && ./stats.sh checks_cov_insn
 	cd riscv-formal/cores/fazyrv && rm -vrf checks
 
-# param: <CHUNKSIZE>
+# param: <CHUNKSIZE>-<RVC>
 fv.rvformal.cov.reg.%:
 	make _fv.rvformal.prepare
-	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $*/' riscv-formal/cores/fazyrv/checks_cov_reg.cfg
-	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $*)/" riscv-formal/cores/fazyrv/checks_cov_reg.cfg
+	$(eval CHUNKSIZE=$(word 1,$(subst -, ,$*)))
+	$(eval RVC=$(word 2,$(subst -, ,$*)))
+	sed -E -i 's/(`define CHUNKSIZE )\S+/\1 $(CHUNKSIZE)/' riscv-formal/cores/fazyrv/checks_cov_reg.cfg
+	sed -i -E "s/<INSERT_DEPTH>/$(call get_depth_value, $(CHUNKSIZE))/" riscv-formal/cores/fazyrv/checks_cov_reg.cfg
+	@if [ $(RVC) = "NONE" ]; then \
+		sed -i 's/<INSERT_ISA>/rv32i/g' riscv-formal/cores/fazyrv/checks_cov_reg.cfg; \
+		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_cov_reg.cfg; \
+	else \
+		sed -i 's/<INSERT_ISA>/rv32ic/g' riscv-formal/cores/fazyrv/checks_cov_reg.cfg; \
+		sed -i 's/<DEF_RVC>/$(RVC)/g' riscv-formal/cores/fazyrv/checks_cov_reg.cfg; \
+	fi
 	cd riscv-formal/cores/fazyrv && $(PYTHON) ../../checks/genchecks.py checks_cov_reg
 	$(MAKE) -C riscv-formal/cores/fazyrv/checks_cov_reg
 	cd riscv-formal/cores/fazyrv && ./stats.sh checks_cov_reg
@@ -291,17 +335,18 @@ summary.soc.all: $(addprefix report.soc.$(TARGET_ARCH)-, $(SYNTH_PARAMS))
 # Track and plot sizes
 #
 
-# param: <ARCH>-<CHUNKSIZE>-<CONF>-<RF>
+# param: <ARCH>-<CHUNKSIZE>-<CONF>-<RF>-<RVC>
 _track.sizes.impl.%:
 	@echo -e "${BLUE}Synthesizing for $*...${RESET}"
 	$(eval ARCH=$(word 1,$(subst -, ,$*)))
 	$(eval CHUNKSIZE=$(word 2,$(subst -, ,$*)))
 	$(eval CONF=$(word 3,$(subst -, ,$*)))
 	$(eval RF=$(word 4,$(subst -, ,$*)))
-	fusesoc run --target=$(ARCH)_ref --build --work-root=$(WORK_DIR_CORE)/$* fazyrv --CHUNKSIZE=$(CHUNKSIZE) --CONF=$(CONF) --RFTYPE=$(RF)
+	$(eval RVC=$(word 5,$(subst -, ,$*)))
+	fusesoc run --target=$(ARCH)_ref --build --work-root=$(WORK_DIR_CORE)/$* fazyrv --CHUNKSIZE=$(CHUNKSIZE) --CONF=$(CONF) --RFTYPE=$(RF) --RVC=$(RVC)
 	$(PYTHON) $(SCRIPT)/reporting.py $(ARCH) $(WORK_DIR_CORE)/$* -o $(SUMMARY_DIR_CORE)/$*.json
 	$(PYTHON) $(SCRIPT)/summary.py $(SUMMARY_DIR_CORE) -o $(SUMMARY_DIR_CORE)/core_ice40.md
-	make report.soc.$(ARCH)-$(CHUNKSIZE)-$(CONF)-$(RF)	
+	make report.soc.$(ARCH)-$(CHUNKSIZE)-$(CONF)-$(RF)-$(RVC)
 
 track.sizes: $(addprefix _track.sizes.impl.ice40-, $(PLOT_PARAMS))
 	$(PYTHON) $(SCRIPT)/plot_track_sizes.py ice40 $(SUMMARY_DIR_CORE) $(SUMMARY_DIR_SOC) --svg ./doc/area.svg --ascii ./doc/area.txt --commit_hash $(COMMIT)

@@ -15,8 +15,11 @@ SRC_SIM 	= $(wildcard tb/*.v tb/*.sv)
 CHUNKSIZE	?= 8
 RFTYPE 		?= BRAM_BP
 CONF 		?= MIN
+RVC 		?= NONE
 MEMDLY1		?= 0
 WITH_CSR 	?= 0
+
+MARCH := rv32i$(if $(filter NONE,$(RVC)),,c)
 
 test: testbench.vvp firmware/firmware.hex
 	$(VVP) -N $<
@@ -25,7 +28,7 @@ test_vcd: testbench.vvp firmware/firmware.hex
 	$(VVP) -N $< +vcd +noerror
 
 testbench.vvp: $(SRC_SIM) $(SRC_DESIGN)
-	$(IVERILOG) -g2005-sv -DSIM -DDEBUG -DCHUNKSIZE=$(CHUNKSIZE) -DRFTYPE=\"$(RFTYPE)\" -DCONF=\"$(CONF)\" -DMEMDLY1=$(MEMDLY1) -o $@ $^
+	$(IVERILOG) -g2005-sv -DSIM -DDEBUG -DCHUNKSIZE=$(CHUNKSIZE) -DRFTYPE=\"$(RFTYPE)\" -DCONF=\"$(CONF)\" -DRVC=\"$(RVC)\" -DMEMDLY1=$(MEMDLY1) -o $@ $^
 	chmod -x $@
 
 firmware/firmware.hex: firmware/firmware.bin firmware/makehex.py
@@ -43,13 +46,13 @@ firmware/firmware.elf: $(FIRMWARE_OBJS) $(TEST_OBJS) firmware/sections.lds
 	$(TOOLCHAIN_PREFIX)objdump --disassemble-all $@ >> firmware/firmware.txt
 
 firmware/start.o: firmware/start.S
-	$(TOOLCHAIN_PREFIX)gcc -c -mabi=ilp32 -march=rv32i -o $@ $<
+	$(TOOLCHAIN_PREFIX)gcc -c -mabi=ilp32 -march=$(MARCH) -o $@ $<
 
 firmware/%.o: firmware/%.c
-	$(TOOLCHAIN_PREFIX)gcc -c -mabi=ilp32 -march=rv32i_zicsr -Os --std=c99 $(GCC_WARNS) -ffreestanding -nostdlib -o $@ $<
+	$(TOOLCHAIN_PREFIX)gcc -c -mabi=ilp32 -march=$(MARCH)_zicsr -Os --std=c99 $(GCC_WARNS) -ffreestanding -nostdlib -o $@ $<
 
 tests/%.o: tests/%.S tests/riscv_test.h tests/test_macros.h
-	$(TOOLCHAIN_PREFIX)gcc -c -DINT_CSR=$(WITH_CSR) -mabi=ilp32 -march=rv32i_zicsr -o $@ -DTEST_FUNC_NAME=$(notdir $(basename $<)) \
+	$(TOOLCHAIN_PREFIX)gcc -c -DINT_CSR=$(WITH_CSR) -mabi=ilp32 -march=$(MARCH)_zicsr -o $@ -DTEST_FUNC_NAME=$(notdir $(basename $<)) \
 		-DTEST_FUNC_TXT='"$(notdir $(basename $<))"' -DTEST_FUNC_RET=$(notdir $(basename $<))_ret $<
 
 clean:

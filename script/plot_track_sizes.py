@@ -88,7 +88,7 @@ def get_ascii_plot(folder, file_prefix, plot_title, commit):
 
 def get_vect_plot(folder_core, folder_soc, file_prefix, commit, save_to):
     fig, axs = plt.subplots(figsize=(8, 2), ncols=2, sharey=True)
-    fig.subplots_adjust(left=0.2, right=0.99, bottom=0.2, wspace=0.05)
+    fig.subplots_adjust(left=0.25, right=0.99, bottom=0.2, wspace=0.05)
 
     # Core
     lables = []

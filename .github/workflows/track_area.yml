@@ -11,16 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: oss-cad-suite
-        uses: YosysHQ/setup-oss-cad-suite@v3
+        uses: YosysHQ/setup-oss-cad-suite@v4
         with:
           version: '2025-07-30'
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -29,7 +29,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Actions checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: fusesoc library
         run: |
@@ -40,7 +40,7 @@ jobs:
         run: make track.sizes COMMIT=$(git rev-parse --short "$GITHUB_SHA")
 
       - name: Plot artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: area_plot
           path: './doc/area*'
@@ -53,14 +53,14 @@ jobs:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v8
 
       - name: Copy to docs
         run: |
-          cp area_plot/area.svg doc/area.svg
-          cp area_plot/area.txt doc/area.txt
+          cp area.svg doc/area.svg
+          cp area.txt doc/area.txt
 
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:

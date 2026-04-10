@@ -8,12 +8,12 @@ module rvfi_wrapper (
 );
 
   localparam PAR_BWIDTH = `CHUNKSIZE;
+  localparam RVC        = `RVC;
   localparam CONF       = "MIN";
   localparam MTVAL      = 'b0;
   localparam BOOTADR    = 'h0;
   localparam RFTYPE     = "LOGIC";
-
-  localparam MEMDLY1  = 0;
+  localparam MEMDLY1    = 0;
 
   // imem
   (* keep *)      wire [31:0] ibus_adr;
@@ -32,6 +32,7 @@ module rvfi_wrapper (
 
   fazyrv_top #( 
     .CHUNKSIZE  ( PAR_BWIDTH  ),
+    .RVC        ( RVC         ),
     .CONF       ( CONF        ),
     .MTVAL      ( MTVAL       ),
     .BOOTADR    ( BOOTADR     ),

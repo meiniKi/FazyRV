@@ -78,17 +78,20 @@ class fazyrv(pluginTemplate):
         -I ' + archtest_env + ' {2} -o {3} {4}'
 
       chunksize = os.environ.get('RISCOF_CHUNKSIZE')
+      rvc = os.environ.get('RISCOF_RVC')
       conf = os.environ.get('RISCOF_CONF')
       rftype = os.environ.get('RISCOF_RFTYPE')
       
       assert chunksize is not None, "CHUNKSIZE is not set"
+      assert rvc is not None, "RVC is not set"
       assert conf is not None, "CONF is not set" 
       assert rftype is not None, "RFTYPE is not set" 
 
       # add more utility snippets here
       build_fazyrv = 'fusesoc run --target=verilator_tb --build --work-root=work_simfsoc \
-      fsoc --MEMSIZE=8388608 --CHUNKSIZE={} --CONF={} --RFTYPE={} --BOOTADR={} --DEBUG=1 --SIM=1 --SIGNATURE=1'.format(
+      fsoc --MEMSIZE=8388608 --CHUNKSIZE={} --RVC={} --CONF={} --RFTYPE={} --BOOTADR={} --DEBUG=1 --SIM=1 --SIGNATURE=1'.format(
         chunksize,
+        rvc,
         conf,
         rftype,
         0
