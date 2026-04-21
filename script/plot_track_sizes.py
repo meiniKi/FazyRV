@@ -24,12 +24,6 @@ def parse_args():
     )
 
     parser.add_argument(
-        "report_core_dir",
-        type=Path,
-        help="Path to the directory containing the core reports"
-    )
-    
-    parser.add_argument(
         "report_soc_dir",
         type=Path,
         help="Path to the directory containing the soc summary reports"
@@ -59,21 +53,21 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def luts_from_json(file_path):
+def from_json_summary(file_path, element):
     with open(file_path, 'r') as file:
         d = json.load(file)
-    return d['summary']['lut']
+    return float(d['summary'][element])
 
-def get_ascii_plot(folder, file_prefix, plot_title, commit):
+def get_ascii_plot(folder, file_prefix, plot_title, element, commit):
     file_paths = glob.glob(f"{folder}/{file_prefix}-*")
 
     lables = []
-    luts = []
+    data = []
     for f in file_paths:
         lables.append('-'.join(Path(f).stem.split("-")[1:]))
-        luts.append(luts_from_json(f))
+        data.append(from_json_summary(f, element))
 
-    luts, lables = zip(*sorted(zip(luts, lables)))
+    data, lables = zip(*sorted(zip(data, lables)))
     txt = ""
 
     graph = Pyasciigraph(
@@ -82,46 +76,48 @@ def get_ascii_plot(folder, file_prefix, plot_title, commit):
         graphsymbol='*'
         )
     
-    for line in  graph.graph(f'{plot_title} (latest update: {commit})', list(zip(lables, luts))):
+    for line in  graph.graph(f'{plot_title} (latest update: {commit})', list(zip(lables, data))):
         txt += line + "\n"
     return txt
 
-def get_vect_plot(folder_core, folder_soc, file_prefix, commit, save_to):
-    fig, axs = plt.subplots(figsize=(8, 2), ncols=2, sharey=True)
-    fig.subplots_adjust(left=0.25, right=0.99, bottom=0.2, wspace=0.05)
+def get_vect_plot(folder, file_prefix, commit, save_to):
+    fig, axs = plt.subplots(figsize=(7, 2), ncols=2, sharey=True, gridspec_kw={'width_ratios': [1.5, 1]})
+    fig.subplots_adjust(left=0.28, right=0.99, bottom=0.2, wspace=0.05)
 
-    # Core
+    # LUTs
+    #
     lables = []
-    luts = []
+    data = []
 
-    for f in glob.glob(f"{folder_core}/{file_prefix}-*"):
+    for f in glob.glob(f"{folder}/{file_prefix}-*"):
         lables.append('-'.join(Path(f).stem.split("-")[1:]))
-        luts.append(luts_from_json(f))
+        data.append(from_json_summary(f, "lut"))
 
-    lables, luts = zip(*sorted(zip(lables, luts), reverse=True))
+    lables, data = zip(*sorted(zip(lables, data), reverse=True))
+    
+    fig.suptitle(f"fsoc: FazyRV minimal reference SoC, iCE40 (latest update: {commit})", fontsize=10)
 
-    axs[0].barh(lables, luts, color='dimgray')
-    axs[0].set_title(f"FazyRV, iCE40 (latest update: {commit})", fontsize=10)
+    axs[0].barh(lables, data, color='dimgray')
     axs[0].set_xlabel("#LUT4", labelpad=0)
     axs[0].grid(True, which='both', axis='x', linestyle='--', linewidth=1)
     axs[0].xaxis.set_major_locator(ticker.MultipleLocator(100))
     axs[0].xaxis.set_minor_locator(ticker.MultipleLocator(50))
-
-    # SoC
+    
+    # fmax
+    #
     lables = []
-    luts = []
+    data = []
 
-    for f in glob.glob(f"{folder_soc}/{file_prefix}*"):
+    for f in glob.glob(f"{folder}/{file_prefix}*"):
         lables.append('-'.join(Path(f).stem.split("-")[1:]))
-        luts.append(luts_from_json(f))
+        data.append(from_json_summary(f, "fmax"))
 
-    axs[1].barh(lables, luts, color='dimgray')
-    axs[1].set_title(f"fsoc, iCE40 (latest update: {commit})", fontsize=10)
-    axs[1].set_xlabel("#LUT4", labelpad=0)
+    axs[1].barh(lables, data, color='dimgray')
+    axs[1].set_xlabel("fmax / MHz", labelpad=0)
     axs[1].grid(True, which='both', axis='x', linestyle='--', linewidth=1)
-    axs[1].xaxis.set_major_locator(ticker.MultipleLocator(100))
-    axs[1].xaxis.set_minor_locator(ticker.MultipleLocator(50))
-
+    axs[1].xaxis.set_major_locator(ticker.MultipleLocator(20))
+    axs[1].xaxis.set_minor_locator(ticker.MultipleLocator(10))
+    
     if save_to is not None:
         fig.savefig(save_to)
 
@@ -129,28 +125,28 @@ def get_vect_plot(folder_core, folder_soc, file_prefix, commit, save_to):
 def main():
     args = parse_args()
 
-    if not os.path.exists(args.report_core_dir) or not os.path.exists(args.report_soc_dir):
-        print("Error: One or both of the specified folders do not exist.")
+    if not os.path.exists(args.report_soc_dir):
+        print("Error: Folder does not exist.")
         sys.exit(1)
 
-    txt = get_ascii_plot(folder=args.report_core_dir,
+    txt = get_ascii_plot(folder=args.report_soc_dir,
                         file_prefix=args.arch,
-                        plot_title="FazyRV, iCE40 Number of LUT-4",
+                        plot_title="fsoc: FazyRV minimal reference SoC, iCE40 Number of LUTs",
+                        element="lut",
                         commit=args.commit_hash)
-    
+
     txt += get_ascii_plot(folder=args.report_soc_dir,
                         file_prefix=args.arch,
-                        plot_title="fsoc, iCE40 Number of LUT-4",
+                        plot_title="fsoc: FazyRV minimal reference SoC, iCE40 Number of fmax",
+                        element="fmax",
                         commit=args.commit_hash)
 
-    with open(args.ascii, 'a') as f:
+    with open(args.ascii, 'w') as f:
         f.write(txt)
 
-    get_vect_plot(folder_core=args.report_core_dir,
-                  folder_soc=args.report_soc_dir,
+    get_vect_plot(folder=args.report_soc_dir,
                   file_prefix=args.arch,
                   commit=args.commit_hash, save_to=args.svg)
-
 
 
 if __name__ == "__main__":
