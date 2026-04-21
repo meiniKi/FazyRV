@@ -328,13 +328,10 @@ _track.sizes.impl.%:
 	$(eval CONF=$(word 3,$(subst -, ,$*)))
 	$(eval RF=$(word 4,$(subst -, ,$*)))
 	$(eval RVC=$(word 5,$(subst -, ,$*)))
-	fusesoc run --target=$(ARCH)_ref --build --work-root=$(WORK_DIR_CORE)/$* fazyrv --CHUNKSIZE=$(CHUNKSIZE) --CONF=$(CONF) --RFTYPE=$(RF) --RVC=$(RVC)
-	$(PYTHON) $(SCRIPT)/reporting.py $(ARCH) $(WORK_DIR_CORE)/$* -o $(SUMMARY_DIR_CORE)/$*.json
-	$(PYTHON) $(SCRIPT)/summary.py $(SUMMARY_DIR_CORE) -o $(SUMMARY_DIR_CORE)/core_ice40.md
 	make report.soc.$(ARCH)-$(CHUNKSIZE)-$(CONF)-$(RF)-$(RVC)
 
 track.sizes: $(addprefix _track.sizes.impl.ice40-, $(PLOT_PARAMS))
-	$(PYTHON) $(SCRIPT)/plot_track_sizes.py ice40 $(SUMMARY_DIR_CORE) $(SUMMARY_DIR_SOC) --svg ./doc/area.svg --ascii ./doc/area.txt --commit_hash $(COMMIT)
+	$(PYTHON) $(SCRIPT)/plot_track_sizes.py ice40 $(SUMMARY_DIR_SOC) --svg ./doc/area.svg --ascii ./doc/area.txt --commit_hash $(COMMIT)
 
 clean:
 	rm -vrf $(WORK_DIR_MAIN)

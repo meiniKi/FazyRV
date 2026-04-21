@@ -18,7 +18,7 @@ jobs:
       - name: oss-cad-suite
         uses: YosysHQ/setup-oss-cad-suite@v4
         with:
-          version: '2025-07-30'
+          version: '2025-03-26'
 
       - uses: actions/setup-python@v6
         with:

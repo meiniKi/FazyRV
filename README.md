@@ -1,4 +1,4 @@
-<img align="right" src="doc/logos/fazyrv.svg" alt="Spacing" width="18%" height="18%">
+<img align="right" src="doc/logos/fazyrv.svg" alt="Spacing" width="16%" height="16%">
 
 # FazyRV -- A Scalable RISC-V Core
 
@@ -34,10 +34,10 @@ FazyRV is a minimal-area RISC-V RV32 core with inherent scalability. The data pa
 
 ### Area / Resource Demand
 
-The plot below tracks the resource demand of the FazyRV core (left) and a minimal reference SoC (right) for an iCE40 architecture. Note that only a few variants are plotted for brevity.
+The plot below tracks the LUT demand and maximum frequency of a minimal FazyRV reference SoC (fsoc) for an iCE40 architecture. Note that only a few variants are plotted for brevity.
 
 <p align="center">
-  <img src="./doc/area.svg" alt="FazyRV and fsoc areas"/>
+  <img src="./doc/area.svg" alt="fsoc areas"/>
 </p>
 
 ### Organization
@@ -48,7 +48,7 @@ FazyRV is contained in `rtl` and licensed under a permissive MIT license.
 
 The data flow through the core can be outlined as follows:
 <p align="center">
-  <img src="./doc/block.png" alt="block diagram" style="width:550px;"/>
+  <img src="./doc/block.png" alt="block diagram" style="width:590px;"/>
 </p>
 
 
