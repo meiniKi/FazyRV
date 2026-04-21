@@ -1,4 +1,4 @@
-<img align="right" src="doc/logos/fazyrv.svg" alt="Spacing" width="18%" height="18%">
+<img align="right" src="doc/logos/fazyrv.svg" alt="Spacing" width="16%" height="16%">
 
 # FazyRV -- A Scalable RISC-V Core
 
@@ -48,7 +48,7 @@ FazyRV is contained in `rtl` and licensed under a permissive MIT license.
 
 The data flow through the core can be outlined as follows:
 <p align="center">
-  <img src="./doc/block.png" alt="block diagram" style="width:550px;"/>
+  <img src="./doc/block.png" alt="block diagram" style="width:590px;"/>
 </p>
 
 
