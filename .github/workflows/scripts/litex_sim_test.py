@@ -7,7 +7,7 @@ def parse_args(argv):
     parser.add_argument("chunksize", type=int, help="Chunk size", choices=[1, 2, 4, 8])
     parser.add_argument("conf",      type=str, help="Config", choices=["MIN", "INT", "CSR"])
     parser.add_argument("rftype",    type=str, help="Register file type.", choices=["LOGIC", "BRAM", "BRAM_BP", "BRAM_DP", "BRAM_DP_BP"])
-    #parser.add_argument("rvc",       type=str, help="RVC support.", choices=["NONE", "COMB", "REGS"])
+    parser.add_argument("rvc",       type=str, help="RVC support.", choices=["NONE", "COMB", "REGS"])
     return parser.parse_args(argv)
 
 def main(argv=None):
@@ -18,7 +18,7 @@ def main(argv=None):
         f"--cpu-chunksize={args.chunksize}",
         f"--cpu-conf={args.conf}",
         f"--cpu-rftype={args.rftype}",
-        #f"--cpu-rvc={args.rvc}"
+        f"--cpu-rvc={args.rvc}"
     ]
     
     cmd = " ".join(cmd)

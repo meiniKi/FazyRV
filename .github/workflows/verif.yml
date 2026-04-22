@@ -65,6 +65,7 @@ jobs:
         CHUNKSIZE: [8]
         CONF: [MIN]
         RFTYPE: [LOGIC]
+        RVC: [NONE, COMB]
 
     steps:
     - name: Checkout repository
@@ -102,7 +103,7 @@ jobs:
 
     - name: Run LiteX sim
       run: |
-        python .github/workflows/scripts/litex_sim_test.py ${{ matrix.CHUNKSIZE }} ${{ matrix.CONF }} ${{ matrix.RFTYPE }}
+        python .github/workflows/scripts/litex_sim_test.py ${{ matrix.CHUNKSIZE }} ${{ matrix.CONF }} ${{ matrix.RFTYPE }} ${{ matrix.RVC }}
 
   riscof:
     name: Run RISCOF
