@@ -153,10 +153,10 @@ TARGET_ARCH=ice40 make summary.soc.all
 
 ### Litex
 
-[LiteX](https://github.com/enjoy-digital/litex) supports FazyRV with the following options: `--cpu-chunksize` to set the chunk size (`1`, `2`, `4`, or `8`), `--cpu-conf` to set the configuration (`MIN`, `INT`, or `CSR`) and `--cpu-rftype` to set the register file type (`LOGIC`, `BRAM`, `BRAM_BP`, `BRAM_DP`, or `BRAM_DP_BP`).
+[LiteX](https://github.com/enjoy-digital/litex) supports FazyRV with the following options: `--cpu-chunksize` to set the chunk size (`1`, `2`, `4`, or `8`), `--cpu-conf` to set the configuration (`MIN`, `INT`, or `CSR`), `--cpu-rftype` to set the register file type (`LOGIC`, `BRAM`, `BRAM_BP`, `BRAM_DP`, or `BRAM_DP_BP`), and `--cpu-rvc` to select support for compressed instructions (`NONE`, `COMB`, or `REG`). Note that experimental features are not supported by LiteX.
 
 ```shell
-litex_sim --cpu-type=fazyrv --cpu-chunksize=4 --cpu-rftype=LOGIC
+litex_sim --cpu-type=fazyrv --cpu-chunksize=4 --cpu-rftype=LOGIC --cpu-rvc=COMB
 ```
 
 ## Tests and Verification
