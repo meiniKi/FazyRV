@@ -25,7 +25,6 @@ A minimal-area RISC-V core with a scalable data path to 1, 2, 4, or 8 bits and m
     - [Embench](#embench)
   - [Decoder](#decoder)
   - [Related Resources and Further Readings](#related-resources-and-further-readings)
-  - [TODOs](#todos)
   - [Licensing](#licensing)
 
 ## Introduction
