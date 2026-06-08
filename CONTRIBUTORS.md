@@ -6,3 +6,4 @@ Contributors:
 
 - Marcel Baunach
 - Meinhard Kissich
+- Daniel Traussnig

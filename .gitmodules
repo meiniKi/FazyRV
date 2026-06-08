@@ -4,3 +4,7 @@
 [submodule "embench-iot"]
 	path = embench-iot
 	url = git@github.com:embench/embench-iot.git
+[submodule "riscv-arch-test-act4"]
+	path = riscv-arch-test-act4
+	url = https://github.com/riscv/riscv-arch-test.git
+	branch = act4

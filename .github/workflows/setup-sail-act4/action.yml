@@ -1,0 +1,27 @@
+name: Get sail-riscv 0.11
+
+runs:
+  using: composite
+  steps:
+    - id: cache-sail-riscv
+      uses: actions/cache@v5
+      with:
+        path: .sail
+        key: sail-riscv-act4-${{ runner.os }}
+
+    - shell: bash
+      if: steps.cache-sail-riscv.outputs.cache-hit != 'true'
+      run: |
+        wget https://github.com/rems-project/sail/releases/download/0.20.1/sail-Linux-x86_64.tar.gz
+        mkdir sail_0_20_1
+        tar -xzf sail-Linux-x86_64.tar.gz -C sail_0_20_1
+        echo "$(pwd)/sail_0_20_1/sail-Linux-x86_64/bin" >> $GITHUB_PATH
+
+    - shell: bash
+      if: steps.cache-sail-riscv.outputs.cache-hit != 'true'
+      run: |
+        wget https://github.com/riscv/sail-riscv/releases/download/0.11/sail-riscv-Linux-x86_64.tar.gz
+        mkdir sail_riscv_0_11
+        tar -xzf sail-riscv-Linux-x86_64.tar.gz -C sail_riscv_0_11
+        echo "$(pwd)/sail_riscv_0_11/sail-riscv-Linux-x86_64/bin" >> $GITHUB_PATH
+

@@ -76,11 +76,13 @@ WORK_DIR_MAIN		?= work
 WORK_DIR_CORE		?= $(WORK_DIR_MAIN)/work_core
 WORK_DIR_SOC		?= $(WORK_DIR_MAIN)/work_soc
 WORK_DIR_RISCOF		?= $(WORK_DIR_MAIN)/work_riscof
+WORK_DIR_ACT4		?= $(WORK_DIR_MAIN)/work_act4
 
 SUMMARY_DIR_SOC			?= $(WORK_DIR_MAIN)/summary_fsoc_soc
 SUMMARY_DIR_CORE		?= $(WORK_DIR_MAIN)/summary_fazyrv
 SUMMARY_DIR_RISCOF 		?= $(WORK_DIR_MAIN)/summary_riscof
 SUMMARY_DIR_RISCVTESTS 	?= $(WORK_DIR_MAIN)/summary_riscvtests
+SUMMARY_DIR_ACT4 	    ?= $(WORK_DIR_MAIN)/summary_act4
 
 get_depth_value = $(if $(filter $(1),8),30,\
 					$(if $(filter $(1),4),37,\
@@ -138,10 +140,10 @@ report.riscvtests.all: $(addprefix sim.riscvtests., $(RVTESTS_PARAMS))
 # RISCOF 
 #
 
-riscof.prepare: dv/config.ini
+riscof.prepare: dv/riscof/config.ini
 	fusesoc library add fsoc .
 	riscof arch-test --clone
-	riscof validateyaml --config=dv/config.ini
+	riscof validateyaml --config=dv/riscof/config.ini
 
 # param: <CHUNKSIZE>-<CONF>-<RFTYPE>-<RVC>
 riscof.run.%: $(SRC_DESIGN) $(SRC_SYNTH)
@@ -156,12 +158,12 @@ riscof.run.%: $(SRC_DESIGN) $(SRC_SYNTH)
 	@echo "RVC: $(RVC)"
 	mkdir -p $(WORK_DIR_RISCOF)
 	mkdir -p $(SUMMARY_DIR_RISCOF)
-	riscof testlist --config=$(if $(filter NONE,$(RVC)),dv/config.ini,dv/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env
+	riscof testlist --config=$(if $(filter NONE,$(RVC)),dv/riscof/config.ini,dv/riscof/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/ --env=riscv-arch-test/riscv-test-suite/env
 	RISCOF_CHUNKSIZE=$(CHUNKSIZE) RISCOF_RVC=$(RVC) RISCOF_CONF=$(CONF) RISCOF_RFTYPE=$(RF) \
-		riscof run --no-browser --config=$(if $(filter NONE,$(RVC)),dv/config.ini,dv/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/rv32i_m/I --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/$*.log
+		riscof run --no-browser --config=$(if $(filter NONE,$(RVC)),dv/riscof/config.ini,dv/riscof/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/rv32i_m/I --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee $(SUMMARY_DIR_RISCOF)/$*.log
 	@if [ "$(RVC)" != "NONE" ]; then \
 		RISCOF_CHUNKSIZE=$(CHUNKSIZE) RISCOF_RVC=$(RVC) RISCOF_CONF=$(CONF) RISCOF_RFTYPE=$(RF) \
-			riscof run --no-browser --config=$(if $(filter NONE,$(RVC)),dv/config.ini,dv/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/rv32i_m/C --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee -a $(SUMMARY_DIR_RISCOF)/$*.log; \
+			riscof run --no-browser --config=$(if $(filter NONE,$(RVC)),dv/riscof/config.ini,dv/riscof/config_c.ini) --suite=riscv-arch-test/riscv-test-suite/rv32i_m/C --env=riscv-arch-test/riscv-test-suite/env 2>&1 | tee -a $(SUMMARY_DIR_RISCOF)/$*.log; \
 	fi
 
 
@@ -270,6 +272,43 @@ fv.rvformal.cov.reg.%:
 	cd riscv-formal/cores/fazyrv && rm -vrf checks
 
 
+########################
+# riscv-arch-test-act4 
+#
+
+act4.prepare:
+	@if [ ! -f riscv-arch-test-act4/Makefile ]; then \
+		echo "[Error] riscv-arch-test-act4 does not exist. Are submodules initialized?"; \
+		exit 1; \
+	fi
+	fusesoc library add fsoc .
+	mkdir -p $(SUMMARY_DIR_ACT4)
+	mkdir -p $(SUMMARY_DIR_ACT4)/logs
+	mkdir -p $(SUMMARY_DIR_ACT4)/result
+	@echo "Preparing ACT4..."
+	VERBOSE=True WORKDIR=../$(WORK_DIR_ACT4) CONFIG_FILES=../dv/act4/config/test_config.yaml EXTENSIONS=I,Zca VERBOSE=True DEBUG=True $(MAKE) -C riscv-arch-test-act4; \
+
+# param: <CHUNKSIZE>-<CONF>-<RFTYPE>-<RVC>
+act4.run.%: act4.prepare
+	$(eval CHUNKSIZE=$(word 1,$(subst -, ,$*)))
+	$(eval CONF=$(word 2,$(subst -, ,$*)))
+	$(eval RF=$(word 3,$(subst -, ,$*)))
+	$(eval RVC=$(word 4,$(subst -, ,$*)))
+	@echo "Running $*"
+	$(PYTHON) dv/act4/run.py $(CHUNKSIZE) $(CONF) $(RF) $(RVC) $(WORK_DIR_ACT4) $(SUMMARY_DIR_ACT4)
+
+act4.all: act4.prepare
+	@FAIL=false; \
+	for t in $(addprefix act4.run., $(RVTESTS_PARAMS)); do \
+		$(MAKE) $$t || echo "WARNING: $$t failed (continuing)"; FAIL=true; \
+	done
+	@echo -e "\033[0;34mGenerating riscv-arch-test-act4 table for all combinations\033[0m"
+	$(SCRIPT)/rvtests_table.sh $(SUMMARY_DIR_ACT4)/result
+	@if [ $$FAIL = true ]; then \
+		exit 1; \
+	fi
+
+
 ################
 # Embench 
 #
@@ -336,7 +375,9 @@ track.sizes: $(addprefix _track.sizes.impl.ice40-, $(PLOT_PARAMS))
 clean:
 	rm -vrf $(WORK_DIR_MAIN)
 	$(MAKE) -C sim clean 
+	WORKDIR=../$(WORK_DIR_ACT4) $(MAKE) -C riscv-arch-test-act4 clean
+	rm -f $(SUMMARY_DIR_ACT4)/*
 
-.PHONY: clean report.riscvtests.all embench.run riscof.all track.sizes.synth
+.PHONY: clean report.riscvtests.all embench.run riscof.all track.sizes.synth act4.prepare.%
 
 
