@@ -341,4 +341,41 @@ always @(posedge clk_i) begin
   end
 end
 
+
+// Used for ACT4 tests
+
+logic [31:0] passfail_addr;
+logic [31:0] print_addr;
+logic print_en;
+
+initial begin
+  print_en = 1'b0;
+  if ($value$plusargs("passfail=%x", passfail_addr) &&
+      $value$plusargs("print=%x", print_addr)) begin
+    print_en = 1'b1;
+  end
+end
+
+logic         last_we;
+logic [31:0]  store_addr;
+logic         store_stb;
+logic [31:0]  store_dat;
+
+assign last_we    = i_fsoc.i_fazyrv_core.rf_we;
+assign store_addr = i_fsoc.wb_mem_adr;
+assign store_stb  = i_fsoc.wb_mem_we & i_fsoc.wb_mem_ack;
+assign store_dat  = i_fsoc.wb_mem_wdat;
+
+
+always @(posedge clk_i) begin
+  if (rst_in && (print_en != 0)) begin
+    if (store_stb && (store_addr == print_addr)) begin
+      $write("%c", store_dat[7:0]);
+    end
+    if (store_stb && (store_addr == passfail_addr)) begin
+      $finish;
+    end
+  end
+end
+
 endmodule

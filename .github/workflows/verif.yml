@@ -171,10 +171,83 @@ jobs:
         make riscof.run.${VARIANT}
         cat ${SUMMARY_DIR_RISCOF}/${VARIANT}.log >> $GITHUB_STEP_SUMMARY
 
+  act4:
+    name: Run ACT4
+    runs-on: ubuntu-latest
+    needs: rvtests
+    strategy:
+      fail-fast: true
+      matrix:
+        CHUNKSIZE: [8, 4, 2, 1]
+        CONF: [MIN]
+        RFTYPE: [LOGIC]
+        RVC: [NONE]
+        include:
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: BRAM_DP_BP
+            RVC: NONE
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: BRAM_BP
+            RVC: NONE
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: BRAM_DP
+            RVC: REG
+          - CHUNKSIZE: 8
+            CONF: MIN
+            RFTYPE: BRAM_DP
+            RVC: HYBR
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        submodules: recursive
+
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+    - run: pip install -r requirements.txt
+
+    - name: fusesoc library
+      run: |
+        fusesoc library add fazyrv .
+        fusesoc library add fsoc .
+
+    - name: oss-cad-suite
+      uses: YosysHQ/setup-oss-cad-suite@v4
+      with:
+        version: '2026-03-26'
+
+    - name: gcc
+      uses: ./.github/workflows/setup-riscv-toolchain-act4
+
+    - name: sail
+      uses: ./.github/workflows/setup-sail-act4
+
+    - name: mise
+      run: |
+        curl https://mise.run | sh
+
+    - name: ACT4
+      env:
+        VARIANT: ${{ matrix.CHUNKSIZE }}-${{ matrix.CONF }}-${{ matrix.RFTYPE }}-${{ matrix.RVC }}
+        SUMMARY_DIR_ACT4: ./act4_summary_dir
+      run: |
+        make act4.prepare
+        set +e
+        make act4.run.${VARIANT}
+        ACT4_EXIT_CODE=$?
+        cat ${SUMMARY_DIR_ACT4}/logs/${VARIANT}.log >> $GITHUB_STEP_SUMMARY
+        exit $ACT4_EXIT_CODE
+
   rvformal:
     name: Run RISC-V Formal Checks
     runs-on: ubuntu-latest
-    needs: riscof
+    needs: [riscof, act4]
     strategy:
       fail-fast: true
       matrix:

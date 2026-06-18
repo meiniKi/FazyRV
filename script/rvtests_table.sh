@@ -25,7 +25,8 @@ for file in "$DIR"/*; do
     filename=$(basename -- "$file")
     number=$(echo "$filename" | cut -d'-' -f1)
     stringA=$(echo "$filename" | cut -d'-' -f2)
-    stringB=$(echo "$filename" | cut -d'-' -f3 | cut -d'.' -f1) # remove .log extension
+    stringB=$(echo "$filename" | cut -d'-' -f3)
+    stringC=$(echo "$filename" | cut -d'-' -f4 | cut -d'.' -f1) # remove .log extension
 
     # Read the file content
     content=$(cat "$file" | tr -d '\n') # Remove newline character if present
@@ -37,16 +38,16 @@ for file in "$DIR"/*; do
 
     # Populate the table based on the content value
     if [ "$content" == "0" ]; then
-        table["$stringA-$stringB,$number"]="OK"
+        table["$stringA-$stringB-$stringC,$number"]="OK"
     else
-        table["$stringA-$stringB,$number"]="ERR"
+        table["$stringA-$stringB-$stringC,$number"]="ERR"
     fi
 done
 
 # Display the transposed table
-echo -e "CONF-RF\\CHUNKSIZE\t$(echo "${!table[@]}" | tr ' ' '\n' | cut -d',' -f2 | sort -u | tr '\n' '\t')"
+echo -e "CONF-RF-RVC\\CHUNKSIZE\t$(echo "${!table[@]}" | tr ' ' '\n' | cut -d',' -f2 | sort -u | tr '\n' '\t')"
 for key in $(echo "${!table[@]}" | tr ' ' '\n' | cut -d',' -f1 | sort -u); do
-    row="$key\t\t"
+    row="$(printf '%-19s' "$key")\t"
     for number in $(echo "${!table[@]}" | tr ' ' '\n' | cut -d',' -f2 | sort -u); do
         row+="${table["$key,$number"]}\t"
     done
