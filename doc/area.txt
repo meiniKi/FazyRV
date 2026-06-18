@@ -1,4 +1,4 @@
-fsoc: FazyRV minimal reference SoC, iCE40 Number of LUTs (latest update: 3ef7421)
+fsoc: FazyRV minimal reference SoC, iCE40 Number of LUTs (latest update: 9ee7e36)
 ---------------------------------------------------------------------------------
 ****************************                         359  1-MIN-BRAM_DP_BP-NONE  
 *****************************                        380  2-MIN-BRAM_DP_BP-NONE  
@@ -8,7 +8,7 @@ fsoc: FazyRV minimal reference SoC, iCE40 Number of LUTs (latest update: 3ef7421
 **************************************               494  4-MIN-BRAM-NONE        
 *********************************************        579  8-MIN-BRAM_DP_BP-NONE  
 ***************************************************  647  8-MIN-BRAM-NONE        
-fsoc: FazyRV minimal reference SoC, iCE40 Number of fmax (latest update: 3ef7421)
+fsoc: FazyRV minimal reference SoC, iCE40 Number of fmax (latest update: 9ee7e36)
 ---------------------------------------------------------------------------------
 ****************************                          42  8-MIN-BRAM-NONE        
 *****************************                         43  8-MIN-BRAM_DP_BP-NONE  
